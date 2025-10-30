@@ -1,0 +1,173 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Vojenská paleta - světlý režim (záložní) */
+    --background: #1B1B1B; /* Téměř černá (Uhlíková) */
+    --foreground: #E0E0E0; /* Světle šedá (Text) */
+    --card: #2A2D30; /* Tmavě šedá (Břidlicová) */
+    --card-foreground: #E0E0E0; /* Světle šedá (Text) */
+    --popover: #2A2D30; /* Tmavě šedá (Břidlicová) */
+    --popover-foreground: #E0E0E0; /* Světle šedá (Text) */
+    --primary: #C53D3D; /* Taktická červená (Výstraha) */
+    --primary-foreground: #FFFFFF; /* White */
+    --secondary: #4A574A; /* Tmavá olivová (Vojenská zelená) */
+    --secondary-foreground: #E0E0E0; /* Světle šedá (Text) */
+    --muted: #2A2D30; /* Tmavě šedá (Břidlicová) */
+    --muted-foreground: #8A8A8A; /* Středně šedá (Ikony/Metadata) */
+    --accent: #4A574A; /* Tmavá olivová (Vojenská zelená) */
+    --accent-foreground: #E0E0E0; /* Světle šedá (Text) */
+    --destructive: #C53D3D; /* Taktická červená (Výstraha) */
+    --destructive-foreground: #FFFFFF; /* White */
+    --border: #2A2D30; /* Tmavě šedá (Břidlicová) */
+    --input: #2A2D30; /* Tmavě šedá (Břidlicová) */
+    --ring: #C53D3D; /* Taktická červená (Výstraha) */
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Vojenská paleta - tmavý režim (hlavní) */
+    --background: #1B1B1B; /* Téměř černá (Uhlíková) */
+    --foreground: #E0E0E0; /* Světle šedá (Text) */
+    --card: #2A2D30; /* Tmavě šedá (Břidlicová) */
+    --card-foreground: #E0E0E0; /* Světle šedá (Text) */
+    --popover: #2A2D30; /* Tmavě šedá (Břidlicová) */
+    --popover-foreground: #E0E0E0; /* Světle šedá (Text) */
+    --primary: #C53D3D; /* Taktická červená (Výstraha) */
+    --primary-foreground: #FFFFFF; /* White */
+    --secondary: #4A574A; /* Tmavá olivová (Vojenská zelená) */
+    --secondary-foreground: #E0E0E0; /* Světle šedá (Text) */
+    --muted: #2A2D30; /* Tmavě šedá (Břidlicová) */
+    --muted-foreground: #8A8A8A; /* Středně šedá (Ikony/Metadata) */
+    --accent: #4A574A; /* Tmavá olivová (Vojenská zelená) */
+    --accent-foreground: #E0E0E0; /* Světle šedá (Text) */
+    --destructive: #C53D3D; /* Taktická červená (Výstraha) */
+    --destructive-foreground: #FFFFFF; /* White */
+    --border: #2A2D30; /* Tmavě šedá (Břidlicová) */
+    --input: #2A2D30; /* Tmavě šedá (Břidlicová) */
+    --ring: #C53D3D; /* Taktická červená (Výstraha) */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply text-foreground antialiased;
+    background-image: url('/images/background.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-200 dark:bg-gray-800;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-500 dark:bg-gray-400 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-600 dark:bg-gray-300;
+  }
+}
+
+@layer components {
+  /* Clean glass effect */
+  .glass {
+    @apply bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50;
+  }
+
+  /* Clean card hover effect */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-lg hover:shadow-gray-200/50 dark:hover:shadow-gray-900/50;
+  }
+
+  /* Clean button styles */
+  .btn-clean {
+    @apply relative overflow-hidden rounded-lg font-medium transition-all duration-200 hover:shadow-md;
+  }
+
+  /* Custom focus styles */
+  .focus-clean {
+    @apply focus:outline-none focus:ring-2 focus:ring-gray-500/50 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900;
+  }
+
+  /* Text selection */
+  ::selection {
+    @apply bg-gray-200 dark:bg-gray-700 text-black dark:text-white;
+  }
+
+  /* Clean input styles */
+  .input-clean {
+    @apply w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 dark:bg-gray-800 dark:text-white transition-all duration-200;
+  }
+
+  /* Loading spinner */
+  .spinner {
+    @apply animate-spin rounded-full border-2 border-gray-300 border-t-gray-600;
+  }
+
+  /* Clean shadows */
+  .shadow-clean {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  }
+
+  .shadow-clean-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+
+  /* Clean borders */
+  .border-clean {
+    @apply border border-gray-200 dark:border-gray-700;
+  }
+
+  /* Subtle animations */
+  .fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+.camo-pattern {
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(34, 197, 94, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 50%);
+}
+
+.weapon-card {
+  @apply bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700;
+}
+
+.weapon-card:hover {
+  @apply transform -translate-y-1;
+}

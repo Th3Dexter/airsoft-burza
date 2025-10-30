@@ -1,0 +1,124 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  phone         String?
+  nickname      String?
+  reputation    String    @default("NEUTRAL") // VERY_GOOD, GOOD, NEUTRAL, BAD, VERY_BAD
+  password      String?   // Optional password for custom registration
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  isVerified    Boolean   @default(false)
+  isBanned      Boolean   @default(false)
+  lastLoginAt   DateTime?
+
+  accounts Account[]
+  sessions Session[]
+  products Product[]
+  messages Message[] @relation("MessageSender")
+  receivedMessages Message[] @relation("MessageReceiver")
+  conversations Conversation[] @relation("ConversationParticipant1")
+  conversations2 Conversation[] @relation("ConversationParticipant2")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  title       String
+  description String
+  price       Float
+  category    String
+  subcategory String?
+  condition   String
+  images      String?     // Array of image URLs stored as comma-separated string
+  location    String?
+  isActive    Boolean     @default(true)
+  isSold      Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  userId      String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversations Conversation[] @relation("ConversationProduct")
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  productId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product @relation("ConversationProduct", fields: [productId], references: [id], onDelete: Cascade)
+  participant1 User @relation("ConversationParticipant1", fields: [participant1Id], references: [id])
+  participant2 User @relation("ConversationParticipant2", fields: [participant2Id], references: [id])
+  participant1Id String
+  participant2Id String
+  messages Message[]
+
+  @@unique([productId, participant1Id, participant2Id])
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  content        String
+  createdAt      DateTime @default(now())
+  conversationId String
+  senderId       String
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender User @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  receiverId String
+}
+
+// Enums are not supported in SQLite, using String instead
+// ProductCategory: AIRSOFT_WEAPONS, MILITARY_EQUIPMENT, OTHER
+// ProductCondition: NEW, LIKE_NEW, GOOD, FAIR, POOR
