@@ -70,7 +70,7 @@ npx prisma migrate dev
 cp env.example .env.local
 
 # Úprava .env.local souboru
-DATABASE_URL="mysql://root@127.0.0.1:3306/burza-web"
+DATABASE_URL="mysql://root@127.0.0.1:3306/airsoft_burza"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="your-secret-key-here"
 ```
@@ -92,8 +92,9 @@ Aplikace bude dostupná na `http://localhost:3000`
 ### Databáze
 Aplikace používá MySQL s přímým připojením. Ujistěte se, že máte:
 - MySQL server běžící na portu 3306
-- Databázi `burza_web` vytvořenou
+- Databázi `airsoft_burza` vytvořenou
 - Uživatele `root` bez hesla
+- Spuštění migrace: `node scripts/migrate-database.js`
 
 ### Autentifikace
 Pro OAuth poskytovatele (Google, GitHub) nastavte:
