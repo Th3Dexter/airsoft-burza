@@ -1,9 +1,15 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 import { ArrowRight, Shield, Users, Plus, Search } from 'lucide-react'
+import { useSession } from 'next-auth/react'
 
 export function CTASection() {
+  const { data: session } = useSession()
+  const isLoggedIn = !!session
+
   return (
     <section className="py-16 lg:py-24 relative">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 opacity-80">
@@ -13,19 +19,20 @@ export function CTASection() {
           </h2>
           
           <p className="text-lg text-muted-foreground mb-8 max-w-3xl mx-auto">
-            Začněte prodávat, nakupovat a komunikovat s tisíci airsoft nadšenci. 
-            Registrace je zdarma a trvá jen pár minut.
+            Prodávejte a nakupujte airsoft vybavení. Vytvářejte inzeráty, prohlížejte nabídky a propojte se s dalšími hráči.
           </p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Link href="/auth/signup">
-              <Button size="lg" className="bg-white text-black hover:bg-gray-100 px-8 py-3 text-lg">
-                <Plus className="h-5 w-5 mr-2" />
-                Zaregistrovat se zdarma
-                <ArrowRight className="h-5 w-5 ml-2" />
-              </Button>
-            </Link>
+            {!isLoggedIn && (
+              <Link href="/auth/signup">
+                <Button size="lg" className="bg-white text-black hover:bg-gray-100 px-8 py-3 text-lg">
+                  <Plus className="h-5 w-5 mr-2" />
+                  Zaregistrovat se zdarma
+                  <ArrowRight className="h-5 w-5 ml-2" />
+                </Button>
+              </Link>
+            )}
             <Link href="/products">
               <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black px-8 py-3 text-lg">
                 <Search className="h-5 w-5 mr-2" />
@@ -40,9 +47,9 @@ export function CTASection() {
               <div className="inline-flex items-center justify-center w-12 h-12 bg-muted rounded-lg mb-4">
                 <Shield className="h-6 w-6 text-foreground" />
               </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">100% Bezpečnost</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-2">Ověření uživatelů</h3>
               <p className="text-muted-foreground text-sm">
-                Ověření uživatelů, šifrovaná komunikace a ochrana vašich dat
+                Ověřené profily pro transparentní komunikaci mezi účastníky trhu
               </p>
             </div>
             
@@ -50,9 +57,9 @@ export function CTASection() {
               <div className="inline-flex items-center justify-center w-12 h-12 bg-muted rounded-lg mb-4">
                 <Users className="h-6 w-6 text-foreground" />
               </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">Aktivní komunita</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-2">Aktivní tržiště</h3>
               <p className="text-muted-foreground text-sm">
-                Připojte se k 2,500+ aktivním uživatelům a najděte nové přátele
+                Stovky aktivních inzerátů napříč celou Českou republikou
               </p>
             </div>
             
@@ -60,9 +67,9 @@ export function CTASection() {
               <div className="inline-flex items-center justify-center w-12 h-12 bg-muted rounded-lg mb-4">
                 <Search className="h-6 w-6 text-foreground" />
               </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">Snadné vyhledávání</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-2">Kategorie produktů</h3>
               <p className="text-muted-foreground text-sm">
-                Pokročilé filtry a rychlé vyhledávání produktů
+                Airsoft zbraně, military vybavení a další doplňky
               </p>
             </div>
           </div>

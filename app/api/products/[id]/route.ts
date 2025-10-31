@@ -197,7 +197,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     // Načtení inzerátu
     const product = await queryOne(
-      `SELECT p.*, u.id as userId, u.name as userName, u.email as userEmail, u.image as userImage, u.nickname as userNickname, u.isVerified as userIsVerified, u.reputation as userReputation, COALESCE(p.viewCount, 0) as viewCount
+      `SELECT p.*, u.id as userId, u.name as userName, u.email as userEmail, u.phone as userPhone, u.image as userImage, u.nickname as userNickname, u.isVerified as userIsVerified, u.reputation as userReputation, COALESCE(p.viewCount, 0) as viewCount
        FROM products p 
        JOIN users u ON p.userId = u.id 
        WHERE p.id = ?`,
@@ -235,11 +235,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 
     const conditionMap: { [key: string]: string } = {
-      'NEW': 'Nové',
-      'LIKE_NEW': 'Jako nové',
-      'GOOD': 'Dobrý stav',
-      'FAIR': 'Použitelné',
-      'POOR': 'Špatný stav'
+      'NEW': 'Nový',
+      'LIGHT_DAMAGE': 'Lehké poškození',
+      'MAJOR_DAMAGE': 'Větší poškození',
+      'NON_FUNCTIONAL': 'Nefunkční'
     }
 
     // Transformace dat

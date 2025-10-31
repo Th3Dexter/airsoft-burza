@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { Footer } from '@/components/layout/Footer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -15,6 +15,58 @@ export default function NewProductPage() {
 	const fileInputRef = useRef<HTMLInputElement | null>(null)
   const { notifyProductCreated, notifyProductError } = useNotificationActions()
 
+  // Načtení profilu uživatele pro automatické vyplnění kontaktních informací
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const response = await fetch('/api/user/profile')
+        if (response.ok) {
+          const data = await response.json()
+          const user = data.user
+          
+          // Vyplnit pole podle dat z profilu
+          if (user && user.email) {
+            const emailInput = document.querySelector('input[name="contactEmail"]') as HTMLInputElement
+            if (emailInput && !emailInput.value) {
+              emailInput.value = user.email
+            }
+          }
+          
+          if (user && user.phone) {
+            const phoneInput = document.querySelector('input[name="contactPhone"]') as HTMLInputElement
+            if (phoneInput && !phoneInput.value) {
+              phoneInput.value = user.phone
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error)
+      }
+    }
+    
+    fetchUserProfile()
+  }, [])
+
+  // Toggle custom condition field
+  useEffect(() => {
+    const conditionSelect = document.querySelector('select[name="condition"]') as HTMLSelectElement
+    const customWrapper = document.querySelector('#customConditionWrapper')
+    
+    const handleConditionChange = () => {
+      if (conditionSelect.value === 'custom') {
+        customWrapper?.classList.remove('hidden')
+      } else {
+        customWrapper?.classList.add('hidden')
+      }
+    }
+    
+    conditionSelect?.addEventListener('change', handleConditionChange)
+    
+    return () => {
+      conditionSelect?.removeEventListener('change', handleConditionChange)
+    }
+  }, [])
+
 	const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
@@ -22,6 +74,20 @@ export default function NewProductPage() {
     try {
       const form = e.target as HTMLFormElement
 			const formData = new FormData(form)
+			
+			// Pokud je vybrán "Vlastní stav", použít hodnotu z customCondition pole
+			const conditionValue = formData.get('condition') as string
+			if (conditionValue === 'custom') {
+				const customCondition = formData.get('customCondition') as string
+				if (customCondition && customCondition.trim()) {
+					// Uložit vlastní stav jako "custom-[text]"
+					formData.set('condition', `custom-${customCondition.trim()}`)
+				} else {
+					notifyProductError('Vyplňte vlastní stav produktu')
+					setIsSubmitting(false)
+					return
+				}
+			}
 			
 			// Odeslat obrázky v původním pořadí - hlavní obrázek se označí samostatně
 			for (const file of files) {
@@ -244,13 +310,27 @@ export default function NewProductPage() {
                       required
                     >
                       <option value="">Vyberte stav</option>
-                      <option value="new">Nové</option>
-                      <option value="like-new">Jako nové</option>
-                      <option value="good">Dobrý stav</option>
-                      <option value="fair">Použitelné</option>
-                      <option value="poor">Špatný stav</option>
+                      <option value="new">Nový</option>
+                      <option value="light-damage">Lehké poškození</option>
+                      <option value="major-damage">Větší poškození</option>
+                      <option value="non-functional">Nefunkční</option>
+                      <option value="custom">Vlastní stav</option>
                     </select>
                   </div>
+                </div>
+
+                {/* Custom condition field - shown when "Vlastní stav" is selected */}
+                <div id="customConditionWrapper" className="hidden">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Popište vlastní stav (max 20 znaků)
+                  </label>
+                  <input
+                    type="text"
+                    name="customCondition"
+                    placeholder="Např. Poškozený kryt"
+                    maxLength={20}
+                    className="w-full px-4 py-3 border-2 border-border bg-card rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:text-white"
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -394,6 +474,7 @@ export default function NewProductPage() {
                     </label>
                     <input
                       type="tel"
+                      name="contactPhone"
                       placeholder="+420 123 456 789"
                       className="w-full px-4 py-3 border-2 border-border bg-card rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:text-white"
                     />
@@ -405,6 +486,7 @@ export default function NewProductPage() {
                     </label>
                     <input
                       type="email"
+                      name="contactEmail"
                       placeholder="vas@email.cz"
                       className="w-full px-4 py-3 border-2 border-border bg-card rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:text-white"
                     />

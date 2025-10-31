@@ -63,16 +63,16 @@ export function Sidebar() {
       } overflow-hidden opacity-70`} style={{ backgroundImage: 'none' }}>
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="p-4 border-b border-border">
-            <Link href="/" className="flex items-center justify-center">
+          <div className="border-b border-border">
+            <Link href="/" className="flex items-center justify-center group">
               <Image
                 src="/images/logo.png"
                 alt="Airsoft Burza"
-                width={200}
-                height={48}
-                className={`h-12 object-contain transition-all duration-300 ease-in-out ${
-                  isOpen ? 'w-auto' : 'w-12 rounded'
-                }`}
+                width={500}
+                height={200}
+                className={`object-contain transition-all duration-300 ease-in-out ${
+                  isOpen ? 'h-40 w-auto' : 'h-28 w-28'
+                } drop-shadow-[0_0_15px_rgba(255,255,255,0.6)] group-hover:drop-shadow-[0_0_30px_rgba(255,255,255,1)]`}
                 priority
                 onError={(e) => {
                   console.log('Logo load error:', e);

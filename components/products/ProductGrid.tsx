@@ -197,16 +197,16 @@ export function ProductGrid({ searchParams }: ProductGridProps) {
                       : null)
                 return cover ? (
                 <Link href={`/products/${product.id}`}>
-                  <Image
+                <Image
                     src={cover}
-                    alt={product.title}
-                    width={400}
+                  alt={product.title}
+                  width={400}
                     height={256}
                     className="w-full h-64 object-cover cursor-pointer"
                     unoptimized
-                  />
+                />
                 </Link>
-                ) : (
+              ) : (
                 <div className="w-full h-64 flex items-center justify-center">
                   <Package className="h-12 w-12 text-gray-400" />
                 </div>
@@ -281,7 +281,7 @@ export function ProductGrid({ searchParams }: ProductGridProps) {
                   router.push(`/products/${product.id}`)
                 }}
               >
-                <Eye className="h-4 w-4 mr-2" />
+                  <Eye className="h-4 w-4 mr-2" />
                 Zobrazit podrobnosti
               </Button>
             </CardFooter>

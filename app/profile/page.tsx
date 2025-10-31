@@ -227,7 +227,7 @@ export default function ProfilePage() {
         })
         
         if (response.ok) {
-          notifyProductDeleted()
+        notifyProductDeleted()
           // Aktualizace seznamu produktů
           setProducts(prev => prev.filter((p: any) => p.id !== productId))
           // Obnovení statistik

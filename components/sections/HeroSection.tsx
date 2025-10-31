@@ -23,8 +23,8 @@ export function HeroSection() {
               </h1>
 
               <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-2xl leading-relaxed">
-                Platforma pro prodej a nákup airsoftových zbraní a military vybavení.
-                Bezpečná komunikace a ověření uživatelů.
+                Prodej a nákup airsoftových zbraní, military vybavení a doplňků. 
+                Kompletní marketplace pro airsoft komunitu v České a Slovenské republice.
               </p>
 
 
@@ -36,9 +36,9 @@ export function HeroSection() {
                             <div className="inline-flex items-center justify-center w-10 h-10 bg-muted rounded-lg mb-4">
                               <Shield className="h-5 w-5 text-muted-foreground" />
                             </div>
-                            <h3 className="text-lg font-semibold text-foreground mb-2">100% Bezpečnost</h3>
+                            <h3 className="text-lg font-semibold text-foreground mb-2">Ověření uživatelů</h3>
                 <p className="text-muted-foreground text-sm">
-                  Ověření uživatelů, šifrovaná komunikace a ochrana vašich dat
+                  Ověřené účty pro důvěryhodnou komunikaci mezi prodejci a kupujícími
                 </p>
               </div>
 
@@ -46,9 +46,9 @@ export function HeroSection() {
                             <div className="inline-flex items-center justify-center w-10 h-10 bg-muted rounded-lg mb-4">
                               <Users className="h-5 w-5 text-muted-foreground" />
                             </div>
-                            <h3 className="text-lg font-semibold text-foreground mb-2">Aktivní komunita</h3>
+                            <h3 className="text-lg font-semibold text-foreground mb-2">Aktivní tržiště</h3>
                 <p className="text-muted-foreground text-sm">
-                  Připojte se k 2,500+ aktivním uživatelům a najděte nové přátele
+                  Desítky nových inzerátů každý den - od zbraní až po military vybavení
                 </p>
               </div>
 
@@ -58,7 +58,7 @@ export function HeroSection() {
                             </div>
                             <h3 className="text-lg font-semibold text-foreground mb-2">Snadné vyhledávání</h3>
                 <p className="text-muted-foreground text-sm">
-                  Pokročilé filtry a rychlé vyhledávání produktů
+                  Podle kategorie, ceny, stavu a lokace
                 </p>
               </div>
             </div>

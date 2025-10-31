@@ -219,7 +219,7 @@ export function FeaturedProducts() {
 
         <div className="text-center mt-8">
           <Button asChild variant="outline">
-            <Link href="/products">Zobrazit všechny inzeráty</Link>
+            <Link href="/products">Zobrazit další inzeráty</Link>
           </Button>
         </div>
       </div>

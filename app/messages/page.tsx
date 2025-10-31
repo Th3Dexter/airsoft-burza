@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
+import { useSearchParams } from 'next/navigation'
 import { Footer } from '@/components/layout/Footer'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Search, Send, Image, X, Video } from 'lucide-react'
-
-const conversations: any[] = []
-
-const messages: any[] = []
+import { Search, Send, Image as ImageIcon, X, Video, User, LogOut } from 'lucide-react'
+import Image from 'next/image'
+import { CloseChatDialog } from '@/components/ui/CloseChatDialog'
+import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog'
 
 interface UploadedFile {
   file: File
@@ -19,17 +19,132 @@ interface UploadedFile {
 
 export default function MessagesPage() {
   const { data: session, status } = useSession()
+  const searchParams = useSearchParams()
+  const [conversations, setConversations] = useState<any[]>([])
+  const [messages, setMessages] = useState<any[]>([])
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [showCloseDialog, setShowCloseDialog] = useState(false)
+  const [showClosedNotification, setShowClosedNotification] = useState(false)
+  const [closedConversationInfo, setClosedConversationInfo] = useState<any>(null)
 
   useEffect(() => {
     if (status !== 'loading') {
       setIsLoading(false)
     }
   }, [status])
+
+  // Načíst konverzace při načtení stránky
+  useEffect(() => {
+    const fetchConversations = async () => {
+      if (status === 'loading') return
+      if (!session) return
+      
+      try {
+        const response = await fetch('/api/conversations')
+        if (response.ok) {
+          const data = await response.json()
+          setConversations(data.conversations || [])
+        }
+      } catch (error) {
+        console.error('Chyba při načítání konverzací:', error)
+      }
+    }
+    
+    fetchConversations()
+  }, [session, status])
+
+  // Zkontrolovat, jestli jsou v URL query parametry pro vytvoření konverzace
+  useEffect(() => {
+    const createOrGetConversation = async () => {
+      if (status === 'loading') return
+      if (!session) return
+      
+      const userId = searchParams.get('userId')
+      const productId = searchParams.get('productId')
+      
+      if (userId && productId) {
+        try {
+          const response = await fetch('/api/conversations', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              productId,
+              otherUserId: userId
+            })
+          })
+          
+          if (response.ok) {
+            const data = await response.json()
+            setSelectedConversation(data.conversationId)
+            // Načíst aktualizovaný seznam konverzací
+            const conversationsResponse = await fetch('/api/conversations')
+            if (conversationsResponse.ok) {
+              const conversationsData = await conversationsResponse.json()
+              setConversations(conversationsData.conversations || [])
+            }
+            // Vyčistit URL parametry
+            window.history.replaceState({}, '', '/messages')
+          } else {
+            console.error('Chyba při vytváření konverzace')
+          }
+        } catch (error) {
+          console.error('Chyba při vytváření konverzace:', error)
+        }
+      }
+    }
+    
+    createOrGetConversation()
+  }, [searchParams, session, status])
+
+  // Načíst zprávy při výběru konverzace
+  useEffect(() => {
+    const fetchMessages = async () => {
+      if (!selectedConversation) {
+        setMessages([])
+        return
+      }
+
+      try {
+        const response = await fetch(`/api/messages?conversationId=${selectedConversation}`)
+        if (response.ok) {
+          const data = await response.json()
+          setMessages(data.messages || [])
+        }
+      } catch (error) {
+        console.error('Chyba při načítání zpráv:', error)
+      }
+    }
+
+    fetchMessages()
+  }, [selectedConversation])
+
+  // Zkontrolovat uzavřené konverzace při výběru konverzace
+  useEffect(() => {
+    const checkClosedConversation = () => {
+      if (!session || !selectedConversation) return
+      
+      const conv = conversations.find(c => c.id === selectedConversation)
+      if (!conv) return
+      
+      const currentUserId = (session.user as any).id
+      // Pokud je konverzace uzavřena někým jiným, zobrazit notifikaci
+      if (conv.closedById && conv.closedById !== currentUserId) {
+        setShowClosedNotification(true)
+        setClosedConversationInfo({
+          conversationId: conv.id,
+          closeReason: conv.closeReason
+        })
+      }
+    }
+    
+    checkClosedConversation()
+  }, [selectedConversation, conversations, session])
 
   // Cleanup preview URLs when component unmounts
   useEffect(() => {
@@ -124,12 +239,77 @@ export default function MessagesPage() {
   const handleSendMessage = async () => {
     if (!newMessage.trim() && uploadedFiles.length === 0) return
     if (!selectedConversation) return
+    if (!session) return
 
-    // Zde by bylo odesílání zprávy na server
-    // Prozatím resetujeme form
-    setNewMessage('')
-    setUploadedFiles([])
-    setUploadError(null)
+    const conversation = conversations.find(c => c.id === selectedConversation)
+    if (!conversation) return
+
+    // Zjistit receiverId (druhý účastník konverzace)
+    const currentUserId = (session.user as any).id
+    const receiverId = conversation.otherUserId
+
+    try {
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          conversationId: selectedConversation,
+          content: newMessage.trim(),
+          receiverId: receiverId
+        })
+      })
+
+      if (response.ok) {
+        // Přidat novou zprávu do seznamu (optimistic update)
+        const messageData = await response.json()
+        const newMsg = {
+          ...messageData.data,
+          senderId: currentUserId,
+          receiverId: receiverId,
+          isOwn: true
+        }
+        setMessages(prev => [...prev, newMsg])
+        
+        // Resetovat form
+        setNewMessage('')
+        setUploadedFiles([])
+        setUploadError(null)
+      } else {
+        console.error('Chyba při odesílání zprávy')
+      }
+    } catch (error) {
+      console.error('Chyba při odesílání zprávy:', error)
+    }
+  }
+
+  const handleCloseConversation = async (reason: string) => {
+    if (!selectedConversation) return
+
+    try {
+      const response = await fetch('/api/conversations', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          conversationId: selectedConversation,
+          closeReason: reason
+        })
+      })
+
+      if (response.ok) {
+        // Odstranit konverzaci z seznamu
+        setConversations(prev => prev.filter(c => c.id !== selectedConversation))
+        setSelectedConversation(null)
+        setShowCloseDialog(false)
+      } else {
+        console.error('Chyba při uzavírání konverzace')
+      }
+    } catch (error) {
+      console.error('Chyba při uzavírání konverzace:', error)
+    }
   }
 
   if (isLoading) {
@@ -209,32 +389,39 @@ export default function MessagesPage() {
                         }`}
                       >
                         <div className="flex items-start space-x-3">
-                          <div className="w-10 h-10 bg-slate-600 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-white font-bold text-sm">
-                              {conversation.avatar}
-                            </span>
+                          <div className="w-10 h-10 bg-slate-600 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                            {conversation.otherUserImage ? (
+                              <Image
+                                src={conversation.otherUserImage}
+                                alt={conversation.otherUserName || 'User'}
+                                width={40}
+                                height={40}
+                                className="w-10 h-10 rounded-full object-cover"
+                              />
+                            ) : (
+                              <User className="h-6 w-6 text-white" />
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-1">
                               <h3 className="font-semibold text-slate-900 dark:text-white text-sm">
-                                {conversation.name}
+                                {conversation.otherUserNickname || conversation.otherUserName}
                               </h3>
-                              <span className="text-xs text-gray-500 dark:text-gray-400">
-                                {conversation.time}
-                              </span>
-                            </div>
-                            <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
-                              {conversation.lastMessage}
-                            </p>
-                            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                              {conversation.product}
-                            </p>
-                            {conversation.unread > 0 && (
-                              <div className="mt-2">
-                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-slate-700 text-white">
-                                  {conversation.unread}
+                              {conversation.lastMessageAt && (
+                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                  {new Date(conversation.lastMessageAt).toLocaleDateString('cs-CZ')}
                                 </span>
-                              </div>
+                              )}
+                            </div>
+                            {conversation.lastMessage && (
+                              <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                                {conversation.lastMessage}
+                              </p>
+                            )}
+                            {conversation.productTitle && (
+                              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                                {conversation.productTitle}
+                              </p>
                             )}
                           </div>
                         </div>
@@ -252,30 +439,51 @@ export default function MessagesPage() {
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      {selectedConversation && conversations.find(c => c.id === selectedConversation) ? (
-                        <>
-                          <div className="w-10 h-10 bg-slate-600 rounded-full flex items-center justify-center">
-                            <span className="text-white font-bold text-sm">
-                              {conversations.find(c => c.id === selectedConversation)?.avatar || ''}
-                            </span>
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-slate-900 dark:text-white">
-                              {conversations.find(c => c.id === selectedConversation)?.name || ''}
-                            </h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-300">
-                              {conversations.find(c => c.id === selectedConversation)?.product || ''}
-                            </p>
-                          </div>
-                        </>
-                      ) : (
+                      {selectedConversation && conversations.find(c => c.id === selectedConversation) ? (() => {
+                        const conv = conversations.find(c => c.id === selectedConversation)
+                        return (
+                          <>
+                            <div className="w-10 h-10 bg-slate-600 rounded-full flex items-center justify-center overflow-hidden">
+                              {conv?.otherUserImage ? (
+                                <Image
+                                  src={conv.otherUserImage}
+                                  alt={conv.otherUserName || 'User'}
+                                  width={40}
+                                  height={40}
+                                  className="w-10 h-10 rounded-full object-cover"
+                                />
+                              ) : (
+                                <User className="h-6 w-6 text-white" />
+                              )}
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-slate-900 dark:text-white">
+                                {conv?.otherUserNickname || conv?.otherUserName || ''}
+                              </h3>
+                              <p className="text-sm text-gray-600 dark:text-gray-300">
+                                {conv?.productTitle || ''}
+                              </p>
+                            </div>
+                          </>
+                        )
+                      })() : (
                         <div>
                           <h3 className="font-semibold text-slate-900 dark:text-white">
                             Vyberte konverzaci
                           </h3>
-                        </div>
+                    </div>
                       )}
                     </div>
+                    {selectedConversation && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowCloseDialog(true)}
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Uzavřít chat
+                      </Button>
+                    )}
                   </div>
                 </div>
 
@@ -288,25 +496,35 @@ export default function MessagesPage() {
                       </p>
                     </div>
                   )}
-                  {messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex ${message.isOwn ? 'justify-end' : 'justify-start'}`}
-                    >
+                  {messages.map((message) => {
+                    const currentUserId = session?.user ? (session.user as any).id : null
+                    const isOwn = message.senderId === currentUserId
+                    
+                    return (
                       <div
-                        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                          message.isOwn
-                            ? 'bg-slate-700 text-white'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white'
-                        }`}
+                        key={message.id}
+                        className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
                       >
-                        <p className="text-sm">{message.content}</p>
-                        <p className="text-xs mt-1 opacity-70">
-                          {message.time}
-                        </p>
+                        <div
+                          className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                            isOwn
+                              ? 'bg-slate-700 text-white'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white'
+                          }`}
+                        >
+                          <p className="text-sm">{message.content}</p>
+                          <p className="text-xs mt-1 opacity-70">
+                            {new Date(message.createdAt).toLocaleString('cs-CZ', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
 
                 {/* Message Input */}
@@ -334,7 +552,7 @@ export default function MessagesPage() {
                                 {isHEIC ? (
                                   // Pro HEIC soubory zobrazíme ikonu, protože preview nemusí fungovat
                                   <div className="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center">
-                                    <Image className="h-8 w-8 text-gray-500 dark:text-gray-400" />
+                                    <ImageIcon className="h-8 w-8 text-gray-500 dark:text-gray-400" />
                                     <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs p-1 rounded-b-lg">
                                       HEIC
                                     </div>
@@ -420,7 +638,7 @@ export default function MessagesPage() {
                       onClick={handleImageButtonClick}
                       title="Nahrát obrázek (max 5MB)"
                     >
-                      <Image className="h-4 w-4" />
+                      <ImageIcon className="h-4 w-4" />
                     </Button>
                     <Button
                       size="sm"
@@ -462,6 +680,83 @@ export default function MessagesPage() {
       </main>
 
       <Footer />
+
+      {/* Dialogs */}
+      <CloseChatDialog
+        isOpen={showCloseDialog}
+        onConfirm={handleCloseConversation}
+        onCancel={() => setShowCloseDialog(false)}
+      />
+
+      <ConfirmationDialog
+        isOpen={showClosedNotification}
+        title="Konverzace byla uzavřena"
+        message={closedConversationInfo ? `Druhá strana ukončila konverzaci s důvodem: ${closedConversationInfo.closeReason}` : ''}
+        confirmText="Ok"
+        type="info"
+        onConfirm={async () => {
+          if (closedConversationInfo) {
+            try {
+              // Označit konverzaci jako skrytou v databázi
+              const response = await fetch('/api/conversations', {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  conversationId: closedConversationInfo.conversationId,
+                  hideConversation: true
+                })
+              })
+
+              if (response.ok) {
+                // Odstranit konverzaci z lokálního seznamu a načíst aktualizovaný seznam
+                const conversationsResponse = await fetch('/api/conversations')
+                if (conversationsResponse.ok) {
+                  const conversationsData = await conversationsResponse.json()
+                  setConversations(conversationsData.conversations || [])
+                }
+              }
+            } catch (error) {
+              console.error('Chyba při skrývání konverzace:', error)
+            }
+          }
+          setShowClosedNotification(false)
+          setClosedConversationInfo(null)
+          setSelectedConversation(null)
+        }}
+        onCancel={async () => {
+          if (closedConversationInfo) {
+            try {
+              // Označit konverzaci jako skrytou v databázi
+              const response = await fetch('/api/conversations', {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  conversationId: closedConversationInfo.conversationId,
+                  hideConversation: true
+                })
+              })
+
+              if (response.ok) {
+                // Odstranit konverzaci z lokálního seznamu a načíst aktualizovaný seznam
+                const conversationsResponse = await fetch('/api/conversations')
+                if (conversationsResponse.ok) {
+                  const conversationsData = await conversationsResponse.json()
+                  setConversations(conversationsData.conversations || [])
+                }
+              }
+            } catch (error) {
+              console.error('Chyba při skrývání konverzace:', error)
+            }
+          }
+          setShowClosedNotification(false)
+          setClosedConversationInfo(null)
+          setSelectedConversation(null)
+        }}
+      />
     </div>
   )
 }

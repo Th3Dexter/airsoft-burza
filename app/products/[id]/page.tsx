@@ -16,10 +16,11 @@ import {
   Package, 
   ArrowLeft,
   Share2,
-  Heart,
   ChevronLeft,
   ChevronRight,
-  X
+  X,
+  Mail,
+  Phone
 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 
@@ -37,6 +38,8 @@ interface Product {
   createdAt: string
   userId: string
   userName: string
+  userEmail?: string
+  userPhone?: string
   userImage: string
   userNickname: string
   userIsVerified: boolean
@@ -53,6 +56,7 @@ export default function ProductDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxImageIndex, setLightboxImageIndex] = useState(0)
+  const [copySuccess, setCopySuccess] = useState(false)
 
   // Načtení produktu
   useEffect(() => {
@@ -194,11 +198,10 @@ export default function ProductDetailPage() {
   }
 
   const conditionMap: { [key: string]: string } = {
-    'Nové': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    'Jako nové': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-    'Dobrý stav': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-    'Použitelné': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-    'Špatný stav': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+    'Nový': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+    'Lehké poškození': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+    'Větší poškození': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+    'Nefunkční': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
   }
 
   const listingTypeLabel = product.listingType === 'NABIZIM' ? 'Nabídka' : 'Poptávka'
@@ -227,6 +230,18 @@ export default function ProductDetailPage() {
   const goToNextImage = () => {
     if (lightboxImageIndex < allImages.length - 1) {
       setLightboxImageIndex(prev => prev + 1)
+    }
+  }
+
+  // Funkce pro sdílení odkazu
+  const handleShare = async () => {
+    try {
+      const url = window.location.href
+      await navigator.clipboard.writeText(url)
+      setCopySuccess(true)
+      setTimeout(() => setCopySuccess(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy link:', err)
     }
   }
 
@@ -341,6 +356,33 @@ export default function ProductDetailPage() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Kontaktní informace prodejce */}
+              <Card className="mt-8">
+                <CardContent className="p-4">
+                  <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+                    Kontakt na prodejce
+                  </h4>
+                  <div className="space-y-2">
+                    {product.userEmail && (
+                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                        <Mail className="h-4 w-4 mr-2" />
+                        <a href={`mailto:${product.userEmail}`} className="hover:underline">
+                          {product.userEmail}
+                        </a>
+                      </div>
+                    )}
+                    {product.userPhone && (
+                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                        <Phone className="h-4 w-4 mr-2" />
+                        <a href={`tel:${product.userPhone}`} className="hover:underline">
+                          {product.userPhone}
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Right side - Product Info */}
@@ -399,8 +441,8 @@ export default function ProductDetailPage() {
                       </div>
                     </div>
                     <Button variant="outline" size="sm" asChild>
-                      <Link href={`/messages?userId=${product.userId}`}>
-                        Zprávy
+                      <Link href={`/messages?userId=${product.userId}&productId=${product.id}`}>
+                        Kontaktovat prostřednictvím webu
                       </Link>
                     </Button>
                   </div>
@@ -443,16 +485,13 @@ export default function ProductDetailPage() {
               </Card>
 
               {/* Actions */}
-              <div className="flex gap-4">
-                <Button className="flex-1 bg-slate-700 hover:bg-slate-800 text-white">
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Sdílet
-                </Button>
-                <Button variant="outline" className="flex-1">
-                  <Heart className="h-4 w-4 mr-2" />
-                  Oblíbit
-                </Button>
-              </div>
+              <Button 
+                className="w-full bg-slate-700 hover:bg-slate-800 text-white"
+                onClick={handleShare}
+              >
+                <Share2 className="h-4 w-4 mr-2" />
+                {copySuccess ? 'Zkopírováno!' : 'Sdílet'}
+              </Button>
             </div>
           </div>
         </div>

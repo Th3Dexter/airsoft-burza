@@ -65,13 +65,33 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validace stavu
-    const validConditions = ['new', 'like-new', 'good', 'fair', 'poor']
-    if (!validConditions.includes(condition)) {
-      return NextResponse.json(
-        { message: 'Neplatný stav' },
-        { status: 400 }
-      )
+    // Zpracování stavu - podpora pro custom stav
+    let conditionValue: string | undefined = undefined
+    if (condition.startsWith('custom-')) {
+      // Vlastní stav - zachovat text
+      const customText = condition.substring(7) // Odstranit "custom-" prefix
+      if (!customText || customText.trim().length === 0) {
+        return NextResponse.json(
+          { message: 'Vyplňte vlastní stav produktu' },
+          { status: 400 }
+        )
+      }
+      conditionValue = sanitizeInput(customText)
+      if (conditionValue.length > 20) {
+        return NextResponse.json(
+          { message: 'Vlastní stav může mít maximálně 20 znaků' },
+          { status: 400 }
+        )
+      }
+    } else {
+      // Validace standardního stavu
+      const validConditions = ['new', 'light-damage', 'major-damage', 'non-functional']
+      if (!validConditions.includes(condition)) {
+        return NextResponse.json(
+          { message: 'Neplatný stav' },
+          { status: 400 }
+        )
+      }
     }
 
     // Validace typu inzerátu (listingType) - už je validováno výše
@@ -280,10 +300,17 @@ export async function POST(request: NextRequest) {
     // Mapování stavů
     const conditionMap: { [key: string]: string } = {
       'new': 'NEW',
-      'like-new': 'LIKE_NEW',
-      'good': 'GOOD',
-      'fair': 'FAIR',
-      'poor': 'POOR'
+      'light-damage': 'LIGHT_DAMAGE',
+      'major-damage': 'MAJOR_DAMAGE',
+      'non-functional': 'NON_FUNCTIONAL'
+    }
+
+    // Zpracování stavu pro uložení
+    let finalCondition: string
+    if (condition.startsWith('custom-') && conditionValue !== undefined) {
+      finalCondition = conditionValue // Použít vlastní text
+    } else {
+      finalCondition = conditionMap[condition]
     }
 
     // Generování unikátního ID pro produkt
@@ -302,7 +329,7 @@ export async function POST(request: NextRequest) {
         listingTypeRaw === 'nabizim' ? 'NABIZIM' : 'SHANIM',  // 5. listingType
         categoryMap[category],   // 6. category
         subcategory || null,     // 7. subcategory
-        conditionMap[condition], // 8. condition
+        finalCondition,         // 8. condition
         mainImagePath,          // 9. mainImage
         JSON.stringify(images), // 10. images
         location,               // 11. location
@@ -394,13 +421,15 @@ export async function GET(request: NextRequest) {
     if (condition) {
       const conditionMap: { [key: string]: string } = {
         'new': 'NEW',
-        'like-new': 'LIKE_NEW',
-        'good': 'GOOD',
-        'fair': 'FAIR',
-        'poor': 'POOR'
+        'light-damage': 'LIGHT_DAMAGE',
+        'major-damage': 'MAJOR_DAMAGE',
+        'non-functional': 'NON_FUNCTIONAL'
       }
-      whereConditions.push('p.`condition` = ?')
-      params.push(conditionMap[condition])
+      const mappedCondition = conditionMap[condition]
+      if (mappedCondition) {
+        whereConditions.push('p.`condition` = ?')
+        params.push(mappedCondition)
+      }
     }
 
     if (location) {
@@ -466,6 +495,20 @@ export async function GET(request: NextRequest) {
 
     const totalPages = Math.ceil(totalCount / limit)
 
+    // Mapování pro zobrazení
+    const categoryMapDisplay: { [key: string]: string } = {
+      'AIRSOFT_WEAPONS': 'Airsoft zbraně',
+      'MILITARY_EQUIPMENT': 'Military vybavení',
+      'OTHER': 'Ostatní'
+    }
+
+    const conditionMapDisplay: { [key: string]: string } = {
+      'NEW': 'Nový',
+      'LIGHT_DAMAGE': 'Lehké poškození',
+      'MAJOR_DAMAGE': 'Větší poškození',
+      'NON_FUNCTIONAL': 'Nefunkční'
+    }
+
     // Transformace dat pro frontend
     const transformedProducts = Array.isArray(products) ? products.map((product: any) => {
       // Parsování obrázků
@@ -489,7 +532,9 @@ export async function GET(request: NextRequest) {
         ...product,
         images,
         price: parseFloat(product.price) || 0,
-        viewCount: parseInt(product.viewCount) || 0
+        viewCount: parseInt(product.viewCount) || 0,
+        category: categoryMapDisplay[product.category] || product.category,
+        condition: conditionMapDisplay[product.condition] || product.condition
       }
     }) : []
 

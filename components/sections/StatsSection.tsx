@@ -79,49 +79,49 @@ export function StatsSection() {
       value: statsData.totalActive.toLocaleString('cs-CZ'),
       icon: Package,
       description: 'Aktuálně dostupné nabídky',
-      color: 'text-blue-500'
+      color: 'text-accent'
     },
     {
       title: 'Nových za 24h',
       value: statsData.newLast24h.toLocaleString('cs-CZ'),
       icon: TrendingUp,
       description: 'Přidáno dnes',
-      color: 'text-green-500'
+      color: 'text-accent'
     },
     {
       title: 'Nových za 7 dní',
       value: statsData.newLast7d.toLocaleString('cs-CZ'),
       icon: Calendar,
       description: 'Přidáno tento týden',
-      color: 'text-purple-500'
+      color: 'text-accent'
     },
     {
       title: 'Nových za 30 dní',
       value: statsData.newLast30d.toLocaleString('cs-CZ'),
       icon: Activity,
       description: 'Přidáno tento měsíc',
-      color: 'text-orange-500'
+      color: 'text-accent'
     },
     {
       title: 'Celkem zobrazení',
       value: statsData.totalViews.toLocaleString('cs-CZ'),
       icon: Eye,
       description: 'Všechna zobrazení',
-      color: 'text-cyan-500'
+      color: 'text-accent'
     },
     {
       title: 'Průměrně zobrazení/inzerát',
       value: statsData.avgViews.toLocaleString('cs-CZ'),
       icon: Eye,
       description: 'Průměr na inzerát',
-      color: 'text-indigo-500'
+      color: 'text-accent'
     },
     {
       title: 'Aktivních prodejců',
       value: statsData.activeSellers.toLocaleString('cs-CZ'),
       icon: Users,
       description: 'S aktivními inzeráty',
-      color: 'text-pink-500'
+      color: 'text-accent'
     },
   ]
 

@@ -50,11 +50,10 @@ export async function GET(request: NextRequest) {
     }
 
     const conditionMap: { [key: string]: string } = {
-      'NEW': 'Nové',
-      'LIKE_NEW': 'Jako nové',
-      'GOOD': 'Dobrý stav',
-      'FAIR': 'Použitelné',
-      'POOR': 'Špatný stav'
+      'NEW': 'Nový',
+      'LIGHT_DAMAGE': 'Lehké poškození',
+      'MAJOR_DAMAGE': 'Větší poškození',
+      'NON_FUNCTIONAL': 'Nefunkční'
     }
 
     // Transformace dat pro frontend

@@ -110,6 +110,54 @@ async function migrateDatabase() {
     } else {
       console.log('⏭️  Sloupec viewCount již existuje')
     }
+
+    // Kontrola existence sloupců v conversations
+    const [conversationColumns] = await connection.execute(`
+      SELECT COLUMN_NAME 
+      FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_SCHEMA = 'burza_web' 
+      AND TABLE_NAME = 'conversations'
+    `)
+    
+    const existingConversationColumns = conversationColumns.map(col => col.COLUMN_NAME)
+    console.log('💬 Existující sloupce (conversations):', existingConversationColumns)
+
+    // Přidání sloupců pro uzavření konverzace
+    const conversationColumnsToAdd = [
+      {
+        name: 'closedById',
+        definition: 'VARCHAR(191) NULL',
+        description: 'ID uživatele, který uzavřel konverzaci'
+      },
+      {
+        name: 'closeReason',
+        definition: 'TEXT NULL',
+        description: 'Důvod uzavření konverzace'
+      },
+      {
+        name: 'closedAt',
+        definition: 'DATETIME(3) NULL',
+        description: 'Datum a čas uzavření konverzace'
+      },
+      {
+        name: 'hiddenForUserId',
+        definition: 'VARCHAR(191) NULL',
+        description: 'ID uživatele, který skryl konverzaci (po kliknutí na Ok v notifikaci o uzavření)'
+      }
+    ]
+    
+    for (const column of conversationColumnsToAdd) {
+      if (!existingConversationColumns.includes(column.name)) {
+        console.log(`➕ Přidávám sloupec: ${column.name} do conversations`)
+        await connection.execute(`
+          ALTER TABLE conversations 
+          ADD COLUMN ${column.name} ${column.definition}
+        `)
+        console.log(`✅ Sloupec ${column.name} byl úspěšně přidán`)
+      } else {
+        console.log(`⏭️  Sloupec ${column.name} již existuje`)
+      }
+    }
     
     console.log('🎉 Migrace databáze dokončena!')
     
