@@ -54,6 +54,7 @@ export default function ProductDetailPage() {
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxImageIndex, setLightboxImageIndex] = useState(0)
 
+  // Načtení produktu
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -113,6 +114,50 @@ export default function ProductDetailPage() {
     }
   }, [productId])
 
+  // Příprava všech obrázků (mainImage + images) - musí být před dalšími hooks
+  const allImages: string[] = product 
+    ? (() => {
+        const images: string[] = []
+        if (product.mainImage && product.mainImage.trim()) {
+          images.push(product.mainImage)
+        }
+        if (product.images && Array.isArray(product.images)) {
+          product.images.forEach(img => {
+            if (img && typeof img === 'string' && img.trim() && !images.includes(img)) {
+              images.push(img)
+            }
+          })
+        }
+        return images
+      })()
+    : []
+
+  // Klávesové zkratky pro navigaci v lightboxu
+  useEffect(() => {
+    if (!lightboxOpen) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft' && lightboxImageIndex > 0) {
+        setLightboxImageIndex(prev => prev - 1)
+      } else if (e.key === 'ArrowRight' && lightboxImageIndex < allImages.length - 1) {
+        setLightboxImageIndex(prev => prev + 1)
+      } else if (e.key === 'Escape') {
+        setLightboxOpen(false)
+        document.body.style.overflow = 'unset'
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [lightboxOpen, lightboxImageIndex, allImages.length])
+
+  // Resetovat lightbox při změně produktu
+  useEffect(() => {
+    setLightboxOpen(false)
+    setLightboxImageIndex(0)
+    document.body.style.overflow = 'unset'
+  }, [productId])
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -159,19 +204,6 @@ export default function ProductDetailPage() {
   const listingTypeLabel = product.listingType === 'NABIZIM' ? 'Nabídka' : 'Poptávka'
   const listingTypeColor = product.listingType === 'NABIZIM' ? 'bg-blue-500' : 'bg-purple-500'
 
-  // Příprava všech obrázků (mainImage + images)
-  const allImages: string[] = []
-  if (product.mainImage && product.mainImage.trim()) {
-    allImages.push(product.mainImage)
-  }
-  if (product.images && Array.isArray(product.images)) {
-    product.images.forEach(img => {
-      if (img && typeof img === 'string' && img.trim() && !allImages.includes(img)) {
-        allImages.push(img)
-      }
-    })
-  }
-
   // Funkce pro otevření lightboxu
   const openLightbox = (index: number) => {
     setLightboxImageIndex(index)
@@ -188,40 +220,15 @@ export default function ProductDetailPage() {
   // Funkce pro přepínání obrázků
   const goToPreviousImage = () => {
     if (lightboxImageIndex > 0) {
-      setLightboxImageIndex(lightboxImageIndex - 1)
+      setLightboxImageIndex(prev => prev - 1)
     }
   }
 
   const goToNextImage = () => {
     if (lightboxImageIndex < allImages.length - 1) {
-      setLightboxImageIndex(lightboxImageIndex + 1)
+      setLightboxImageIndex(prev => prev + 1)
     }
   }
-
-  // Klávesové zkratky pro navigaci
-  useEffect(() => {
-    if (!lightboxOpen) return
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft' && lightboxImageIndex > 0) {
-        setLightboxImageIndex(prev => prev - 1)
-      } else if (e.key === 'ArrowRight' && lightboxImageIndex < allImages.length - 1) {
-        setLightboxImageIndex(prev => prev + 1)
-      } else if (e.key === 'Escape') {
-        closeLightbox()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [lightboxOpen, lightboxImageIndex, allImages.length])
-
-  // Resetovat lightbox při změně produktu
-  useEffect(() => {
-    setLightboxOpen(false)
-    setLightboxImageIndex(0)
-    document.body.style.overflow = 'unset'
-  }, [productId])
 
   return (
     <div className="min-h-screen flex flex-col">
