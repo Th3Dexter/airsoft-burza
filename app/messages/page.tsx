@@ -5,73 +5,132 @@ import { useSession } from 'next-auth/react'
 import { Footer } from '@/components/layout/Footer'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Search, Send, MoreVertical, Phone, Video, Image, Paperclip } from 'lucide-react'
+import { Search, Send, Image, X, Video } from 'lucide-react'
 
-const conversations = [
-  {
-    id: '1',
-    name: 'Petr Svoboda',
-    lastMessage: 'Dobrý den, máte ještě tu taktickou vestu?',
-    time: '14:30',
-    unread: 2,
-    avatar: 'PS',
-    product: 'Taktická vesta Condor'
-  },
-  {
-    id: '2',
-    name: 'Tomáš Dvořák',
-    lastMessage: 'Děkuji za rychlé dodání!',
-    time: '12:15',
-    unread: 0,
-    avatar: 'TD',
-    product: 'Combat boty 5.11'
-  },
-  {
-    id: '3',
-    name: 'Martin Kratochvíl',
-    lastMessage: 'Můžeme se domluvit na osobním předání?',
-    time: '10:45',
-    unread: 1,
-    avatar: 'MK',
-    product: 'Glock 17 Gen 4'
-  }
-]
+const conversations: any[] = []
 
-const messages = [
-  {
-    id: '1',
-    sender: 'Petr Svoboda',
-    content: 'Dobrý den, máte ještě tu taktickou vestu?',
-    time: '14:25',
-    isOwn: false
-  },
-  {
-    id: '2',
-    sender: 'Jan Novák',
-    content: 'Ano, stále ji mám. Je v perfektním stavu.',
-    time: '14:26',
-    isOwn: true
-  },
-  {
-    id: '3',
-    sender: 'Petr Svoboda',
-    content: 'Skvělé! Můžeme se domluvit na osobním předání v Praze?',
-    time: '14:30',
-    isOwn: false
-  }
-]
+const messages: any[] = []
+
+interface UploadedFile {
+  file: File
+  preview: string
+  type: 'image' | 'video'
+}
 
 export default function MessagesPage() {
   const { data: session, status } = useSession()
-  const [selectedConversation, setSelectedConversation] = useState('1')
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
+  const [uploadError, setUploadError] = useState<string | null>(null)
 
   useEffect(() => {
     if (status !== 'loading') {
       setIsLoading(false)
     }
   }, [status])
+
+  // Cleanup preview URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      uploadedFiles.forEach(file => {
+        if (file.preview.startsWith('blob:')) {
+          URL.revokeObjectURL(file.preview)
+        }
+      })
+    }
+  }, [uploadedFiles])
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    setUploadError(null)
+    const newFiles: UploadedFile[] = []
+
+    Array.from(files).forEach((file) => {
+      // Kontrola typu souboru - podpora pro iPhone (HEIC, MOV, atd.)
+      const fileName = file.name.toLowerCase()
+      const fileExtension = fileName.split('.').pop() || ''
+      
+      // Podporované formáty obrázků (včetně iPhone HEIC)
+      const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif']
+      const imageMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif']
+      
+      // Podporované formáty videí (včetně iPhone MOV)
+      const videoExtensions = ['mp4', 'mov', 'avi', 'webm', 'mkv', 'm4v']
+      const videoMimes = ['video/mp4', 'video/quicktime', 'video/avi', 'video/webm', 'video/x-matroska', 'video/x-m4v']
+      
+      const isImage = file.type.startsWith('image/') || 
+                      imageMimes.includes(file.type) || 
+                      imageExtensions.includes(fileExtension)
+      
+      const isVideo = file.type.startsWith('video/') || 
+                      videoMimes.includes(file.type) || 
+                      videoExtensions.includes(fileExtension)
+
+      if (!isImage && !isVideo) {
+        setUploadError(`Soubor ${file.name} není podporovaný formát (podporujeme pouze obrázky a videa včetně iPhone formátů HEIC a MOV)`)
+        return
+      }
+
+      // Validace velikosti
+      const maxSize = isImage ? 5 * 1024 * 1024 : 50 * 1024 * 1024 // 5MB pro obrázky, 50MB pro videa
+      const maxSizeMB = isImage ? 5 : 50
+
+      if (file.size > maxSize) {
+        setUploadError(`Soubor ${file.name} je příliš velký. Maximální velikost pro ${isImage ? 'obrázky' : 'videa'} je ${maxSizeMB}MB`)
+        return
+      }
+
+      // Vytvoření preview
+      const preview = URL.createObjectURL(file)
+      newFiles.push({
+        file,
+        preview,
+        type: isImage ? 'image' : 'video'
+      })
+    })
+
+    if (newFiles.length > 0) {
+      setUploadedFiles(prev => [...prev, ...newFiles])
+    }
+
+    // Reset input
+    e.target.value = ''
+  }
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => {
+      const file = prev[index]
+      if (file.preview.startsWith('blob:')) {
+        URL.revokeObjectURL(file.preview)
+      }
+      return prev.filter((_, i) => i !== index)
+    })
+  }
+
+  const handleImageButtonClick = () => {
+    const input = document.getElementById('image-input') as HTMLInputElement
+    input?.click()
+  }
+
+  const handleVideoButtonClick = () => {
+    const input = document.getElementById('video-input') as HTMLInputElement
+    input?.click()
+  }
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() && uploadedFiles.length === 0) return
+    if (!selectedConversation) return
+
+    // Zde by bylo odesílání zprávy na server
+    // Prozatím resetujeme form
+    setNewMessage('')
+    setUploadedFiles([])
+    setUploadError(null)
+  }
 
   if (isLoading) {
     return (
@@ -134,6 +193,13 @@ export default function MessagesPage() {
 
                   {/* Conversations */}
                   <div className="overflow-y-auto">
+                    {conversations.length === 0 && (
+                      <div className="p-4 text-center">
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">
+                          Žádné konverzace
+                        </p>
+                      </div>
+                    )}
                     {conversations.map((conversation) => (
                       <div
                         key={conversation.id}
@@ -186,34 +252,42 @@ export default function MessagesPage() {
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-slate-600 rounded-full flex items-center justify-center">
-                        <span className="text-white font-bold text-sm">PS</span>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-slate-900 dark:text-white">
-                          Petr Svoboda
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-300">
-                          Taktická vesta Condor
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Button size="sm" variant="outline">
-                        <Phone className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Video className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
+                      {selectedConversation && conversations.find(c => c.id === selectedConversation) ? (
+                        <>
+                          <div className="w-10 h-10 bg-slate-600 rounded-full flex items-center justify-center">
+                            <span className="text-white font-bold text-sm">
+                              {conversations.find(c => c.id === selectedConversation)?.avatar || ''}
+                            </span>
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-slate-900 dark:text-white">
+                              {conversations.find(c => c.id === selectedConversation)?.name || ''}
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">
+                              {conversations.find(c => c.id === selectedConversation)?.product || ''}
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        <div>
+                          <h3 className="font-semibold text-slate-900 dark:text-white">
+                            Vyberte konverzaci
+                          </h3>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
 
                 {/* Messages */}
                 <div className="flex-1 p-4 overflow-y-auto space-y-4">
+                  {messages.length === 0 && (
+                    <div className="flex items-center justify-center h-full">
+                      <p className="text-gray-500 dark:text-gray-400">
+                        Žádné zprávy. Začněte konverzaci výběrem z levého panelu.
+                      </p>
+                    </div>
+                  )}
                   {messages.map((message) => (
                     <div
                       key={message.id}
@@ -237,12 +311,125 @@ export default function MessagesPage() {
 
                 {/* Message Input */}
                 <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+                  {/* Error message */}
+                  {uploadError && (
+                    <div className="mb-2 p-2 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded text-red-700 dark:text-red-300 text-sm">
+                      {uploadError}
+                    </div>
+                  )}
+
+                  {/* Preview nahraných souborů */}
+                  {uploadedFiles.length > 0 && (
+                    <div className="mb-2 flex flex-wrap gap-2">
+                      {uploadedFiles.map((uploadedFile, index) => {
+                        const isHEIC = uploadedFile.file.name.toLowerCase().endsWith('.heic') || 
+                                       uploadedFile.file.name.toLowerCase().endsWith('.heif') ||
+                                       uploadedFile.file.type === 'image/heic' || 
+                                       uploadedFile.file.type === 'image/heif'
+                        
+                        return (
+                          <div key={index} className="relative group">
+                            {uploadedFile.type === 'image' ? (
+                              <div className="relative">
+                                {isHEIC ? (
+                                  // Pro HEIC soubory zobrazíme ikonu, protože preview nemusí fungovat
+                                  <div className="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center">
+                                    <Image className="h-8 w-8 text-gray-500 dark:text-gray-400" />
+                                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs p-1 rounded-b-lg">
+                                      HEIC
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <img
+                                      src={uploadedFile.preview}
+                                      alt={`Náhled ${index + 1}`}
+                                      className="w-20 h-20 object-cover rounded-lg border border-gray-300 dark:border-gray-600"
+                                    />
+                                  </>
+                                )}
+                                <button
+                                  onClick={() => removeFile(index)}
+                                  className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                  type="button"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="relative">
+                                {(uploadedFile.file.name.toLowerCase().endsWith('.mov') || 
+                                   uploadedFile.file.name.toLowerCase().endsWith('.m4v') ||
+                                   uploadedFile.file.type === 'video/quicktime' ||
+                                   uploadedFile.file.type === 'video/x-m4v') ? (
+                                  // Pro MOV/M4V zobrazíme ikonu, protože preview nemusí fungovat ve všech prohlížečích
+                                  <div className="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center">
+                                    <Video className="h-8 w-8 text-gray-500 dark:text-gray-400" />
+                                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs p-1 rounded-b-lg">
+                                      {uploadedFile.file.name.split('.').pop()?.toUpperCase() || 'VIDEO'}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <video
+                                    src={uploadedFile.preview}
+                                    className="w-20 h-20 object-cover rounded-lg border border-gray-300 dark:border-gray-600"
+                                    muted
+                                  />
+                                )}
+                                <button
+                                  onClick={() => removeFile(index)}
+                                  className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                  type="button"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
+                            )}
+                            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 rounded-b-lg truncate">
+                              {(uploadedFile.file.size / 1024 / 1024).toFixed(2)} MB
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {/* Skryté inputy pro soubory */}
+                  <input
+                    id="image-input"
+                    type="file"
+                    accept="image/*,image/heic,image/heif,.heic,.heif"
+                    multiple
+                    className="hidden"
+                    onChange={handleFileSelect}
+                  />
+                  <input
+                    id="video-input"
+                    type="file"
+                    accept="video/*,video/quicktime,.mov,.m4v"
+                    multiple
+                    className="hidden"
+                    onChange={handleFileSelect}
+                  />
+
                   <div className="flex items-center space-x-2">
-                    <Button size="sm" variant="outline">
-                      <Paperclip className="h-4 w-4" />
-                    </Button>
-                    <Button size="sm" variant="outline">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      type="button"
+                      onClick={handleImageButtonClick}
+                      title="Nahrát obrázek (max 5MB)"
+                    >
                       <Image className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      type="button"
+                      onClick={handleVideoButtonClick}
+                      title="Nahrát video (max 50MB)"
+                    >
+                      <Video className="h-4 w-4" />
                     </Button>
                     <div className="flex-1">
                       <input
@@ -250,10 +437,20 @@ export default function MessagesPage() {
                         placeholder="Napište zprávu..."
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault()
+                            handleSendMessage()
+                          }
+                        }}
                         className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500 dark:bg-gray-800 dark:text-white"
                       />
                     </div>
-                    <Button className="bg-slate-700 hover:bg-slate-800 text-white">
+                    <Button
+                      className="bg-slate-700 hover:bg-slate-800 text-white"
+                      onClick={handleSendMessage}
+                      disabled={!newMessage.trim() && uploadedFiles.length === 0}
+                    >
                       <Send className="h-4 w-4" />
                     </Button>
                   </div>

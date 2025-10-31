@@ -1,17 +1,18 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 import { ArrowRight, Shield, Users, Plus, Search } from 'lucide-react'
 
 export function CTASection() {
   return (
-    <section className="py-16 lg:py-24 bg-gray-700 dark:bg-gray-800">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-16 lg:py-24 relative">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 opacity-80">
         <div className="text-center">
-          <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
+          <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
             Připojte se k největší airsoft komunitě v České republice
           </h2>
           
-          <p className="text-lg text-gray-200 mb-8 max-w-3xl mx-auto">
+          <p className="text-lg text-muted-foreground mb-8 max-w-3xl mx-auto">
             Začněte prodávat, nakupovat a komunikovat s tisíci airsoft nadšenci. 
             Registrace je zdarma a trvá jen pár minut.
           </p>
@@ -35,32 +36,32 @@ export function CTASection() {
 
           {/* Features Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-12">
-            <div className="bg-gray-600 dark:bg-gray-700 rounded-lg p-6 text-center">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-500 dark:bg-gray-600 rounded-lg mb-4">
-                <Shield className="h-6 w-6 text-white" />
+            <div className="bg-card rounded-lg p-6 text-center border border-border">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-muted rounded-lg mb-4">
+                <Shield className="h-6 w-6 text-foreground" />
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">100% Bezpečnost</h3>
-              <p className="text-slate-200 text-sm">
+              <h3 className="text-lg font-semibold text-foreground mb-2">100% Bezpečnost</h3>
+              <p className="text-muted-foreground text-sm">
                 Ověření uživatelů, šifrovaná komunikace a ochrana vašich dat
               </p>
             </div>
             
-            <div className="bg-gray-600 dark:bg-gray-700 rounded-lg p-6 text-center">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-500 dark:bg-gray-600 rounded-lg mb-4">
-                <Users className="h-6 w-6 text-white" />
+            <div className="bg-card rounded-lg p-6 text-center border border-border">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-muted rounded-lg mb-4">
+                <Users className="h-6 w-6 text-foreground" />
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Aktivní komunita</h3>
-              <p className="text-slate-200 text-sm">
+              <h3 className="text-lg font-semibold text-foreground mb-2">Aktivní komunita</h3>
+              <p className="text-muted-foreground text-sm">
                 Připojte se k 2,500+ aktivním uživatelům a najděte nové přátele
               </p>
             </div>
             
-            <div className="bg-gray-600 dark:bg-gray-700 rounded-lg p-6 text-center">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-500 dark:bg-gray-600 rounded-lg mb-4">
-                <Search className="h-6 w-6 text-white" />
+            <div className="bg-card rounded-lg p-6 text-center border border-border">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-muted rounded-lg mb-4">
+                <Search className="h-6 w-6 text-foreground" />
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Snadné vyhledávání</h3>
-              <p className="text-slate-200 text-sm">
+              <h3 className="text-lg font-semibold text-foreground mb-2">Snadné vyhledávání</h3>
+              <p className="text-muted-foreground text-sm">
                 Pokročilé filtry a rychlé vyhledávání produktů
               </p>
             </div>

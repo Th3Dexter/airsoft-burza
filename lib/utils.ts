@@ -6,10 +6,14 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatPrice(price: number): string {
-  return new Intl.NumberFormat('cs-CZ', {
+  // Formátovat cenu bez ",00" - jen celé číslo s mezerou
+  const formatted = new Intl.NumberFormat('cs-CZ', {
     style: 'currency',
     currency: 'CZK',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(price)
+  return formatted
 }
 
 export function formatDate(date: Date): string {

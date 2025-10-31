@@ -218,14 +218,30 @@ export default function ProfilePage() {
     }
   }
 
-  const handleDeleteProduct = async (productName: string) => {
+  const handleDeleteProduct = async (productId: string, productName: string) => {
     const confirmed = await confirmDeleteProduct(productName)
     if (confirmed) {
       try {
-        // Simulace mazání produktu
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        notifyProductDeleted()
+        const response = await fetch(`/api/products/${productId}`, {
+          method: 'DELETE'
+        })
+        
+        if (response.ok) {
+          notifyProductDeleted()
+          // Aktualizace seznamu produktů
+          setProducts(prev => prev.filter((p: any) => p.id !== productId))
+          // Obnovení statistik
+          const statsResponse = await fetch('/api/user/stats')
+          if (statsResponse.ok) {
+            const statsData = await statsResponse.json()
+            setStats(statsData)
+          }
+        } else {
+          const error = await response.json()
+          notifyProfileError(error.message || 'Nepodařilo se smazat inzerát')
+        }
       } catch (error) {
+        console.error('Delete product error:', error)
         notifyProfileError('Nepodařilo se smazat inzerát')
       }
     }
@@ -237,7 +253,7 @@ export default function ProfilePage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
           {/* Profile Header */}
           <div className="mb-8">
-            <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-8">
+            <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-8 opacity-80">
               <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">
                 <div className="w-24 h-24 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center">
                   {userData.avatar ? (
@@ -500,7 +516,7 @@ export default function ProfilePage() {
                             <Button 
                               size="sm" 
                               variant="outline"
-                              onClick={() => handleDeleteProduct(product.title)}
+                              onClick={() => handleDeleteProduct(product.id, product.title)}
                               className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
                             >
                               <Trash2 className="h-4 w-4" />

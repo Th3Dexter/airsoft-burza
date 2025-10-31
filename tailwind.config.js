@@ -16,6 +16,9 @@ module.exports = {
       },
     },
     extend: {
+      fontFamily: {
+        'good-timing': ['Good Timing', 'sans-serif'],
+      },
       colors: {
         border: "var(--border)",
         input: "var(--input)",

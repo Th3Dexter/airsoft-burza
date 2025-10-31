@@ -96,3 +96,7 @@ jspm_packages/
 # Temporary folders
 tmp/
 temp/
+
+# User uploaded files
+public/uploads/
+uploads/

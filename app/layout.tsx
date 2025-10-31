@@ -1,13 +1,16 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Orbitron } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
 import { Toaster } from 'react-hot-toast'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { LoadingProvider } from '@/components/providers/LoadingProvider'
 import { PageTransition } from '@/components/ui/PageTransition'
+import { CookieConsent } from '@/components/cookies/CookieConsent'
+import { AnimatedBackground } from '@/components/AnimatedBackground'
 
 const inter = Inter({ subsets: ['latin'] })
+const orbitron = Orbitron({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Airsoft Burza - Prodej a nákup airsoftových zbraní',
@@ -79,15 +82,20 @@ export default function RootLayout({
         <meta name="theme-color" content="#000000" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
       </head>
-      <body className={`${inter.className} min-h-screen flex flex-col`}>
+      <body className={`${inter.className} min-h-screen flex flex-col relative`}>
+        <AnimatedBackground />
         <Providers>
           <LoadingProvider>
-            <Sidebar />
-            <main className="flex-1">
-              <PageTransition>
-                {children}
-              </PageTransition>
-            </main>
+            <div className="relative z-10">
+              <Sidebar />
+              <main className="flex-1">
+                <PageTransition>
+                  {children}
+                </PageTransition>
+              </main>
+            </div>
+            {/* Cookie Consent Banner */}
+            <CookieConsent />
             <Toaster 
               position="top-right"
               toastOptions={{

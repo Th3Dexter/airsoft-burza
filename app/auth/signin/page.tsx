@@ -3,14 +3,13 @@
 import { Footer } from '@/components/layout/Footer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
+import { } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { signIn, getProviders } from 'next-auth/react'
 import { useNotificationActions } from '@/lib/useNotificationActions'
 
 export default function SignInPage() {
-  const [showPassword, setShowPassword] = useState(false)
   const [providers, setProviders] = useState<any>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { notifyLoginSuccess, notifyLoginError } = useNotificationActions()
@@ -31,28 +30,6 @@ export default function SignInPage() {
         notifyLoginSuccess()
       } else {
         notifyLoginError()
-      }
-    } catch (error) {
-      notifyLoginError()
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  const handleEmailLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      setIsSubmitting(true)
-      // Simulace přihlášení - v reálné aplikaci by zde byl skutečný signIn call
-      const success = Math.random() > 0.3 // 70% šance na úspěch pro demo
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      if (success) {
-        notifyLoginSuccess()
-        // V reálné aplikaci by zde byl redirect
-        // window.location.href = '/'
-      } else {
-        notifyLoginError('Neplatné přihlašovací údaje')
       }
     } catch (error) {
       notifyLoginError()
@@ -117,92 +94,9 @@ export default function SignInPage() {
                 })}
               </div>
 
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300 dark:border-gray-600" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white dark:bg-gray-900 text-gray-500">nebo</span>
-                </div>
-              </div>
-
-              {/* Email/Password Form */}
-              <form onSubmit={handleEmailLogin} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Email
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                    <input
-                      type="email"
-                      placeholder="vas@email.cz"
-                      className="w-full pl-10 pr-4 py-3 border-2 border-border bg-card rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 dark:text-white"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Heslo
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="Vaše heslo"
-                      className="w-full pl-10 pr-12 py-3 border-2 border-border bg-card rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 dark:text-white"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                    >
-                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 text-gray-600 focus:ring-gray-500 border-gray-300 rounded"
-                    />
-                    <span className="ml-2 text-sm text-gray-600 dark:text-gray-300">
-                      Zapamatovat si mě
-                    </span>
-                  </label>
-                  <Link
-                    href="/auth/forgot-password"
-                    className="text-sm text-gray-600 hover:text-gray-500 dark:text-gray-400"
-                  >
-                    Zapomněli jste heslo?
-                  </Link>
-                </div>
-
-                <Button 
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full bg-black hover:bg-gray-800 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? 'Přihlašuji...' : 'Přihlásit se'}
-                </Button>
-              </form>
-
-              <div className="text-center">
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Nemáte účet?{' '}
-                  <Link
-                    href="/auth/signup"
-                    className="text-gray-600 hover:text-gray-500 dark:text-gray-400 font-medium"
-                  >
-                    Zaregistrujte se
-                  </Link>
-                </p>
-              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-300 text-center">
+                Přihlášení je dostupné pouze přes Google účet.
+              </p>
             </CardContent>
           </Card>
         </div>

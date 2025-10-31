@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { query, update, queryOne } from '@/lib/mysql'
 
+// Force dynamic rendering - requires session data
+export const dynamic = 'force-dynamic'
+
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions)
@@ -189,10 +192,12 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const productId = params.id
+    const { searchParams } = new URL(request.url)
+    const trackView = searchParams.get('trackView') === 'true'
 
     // Načtení inzerátu
     const product = await queryOne(
-      `SELECT p.*, u.id as userId, u.name as userName, u.email as userEmail, u.image as userImage, u.nickname as userNickname, u.isVerified as userIsVerified, u.reputation as userReputation
+      `SELECT p.*, u.id as userId, u.name as userName, u.email as userEmail, u.image as userImage, u.nickname as userNickname, u.isVerified as userIsVerified, u.reputation as userReputation, COALESCE(p.viewCount, 0) as viewCount
        FROM products p 
        JOIN users u ON p.userId = u.id 
        WHERE p.id = ?`,
@@ -204,6 +209,22 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         { message: 'Inzerát nebyl nalezen' },
         { status: 404 }
       )
+    }
+
+    // Increment viewCount pokud je požadováno
+    // Ochrana proti spamu je na klientovi (localStorage s časovým limitem)
+    if (trackView) {
+      try {
+        await update(
+          `UPDATE products SET viewCount = COALESCE(viewCount, 0) + 1 WHERE id = ?`,
+          [productId]
+        )
+        // Aktualizovat viewCount v response
+        product.viewCount = (parseInt(product.viewCount) || 0) + 1
+      } catch (error) {
+        console.error('Error incrementing view count:', error)
+        // Pokračovat i když increment selže
+      }
     }
 
     // Mapování kategorií a stavů
@@ -227,7 +248,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       category: categoryMap[product.category] || product.category,
       condition: conditionMap[product.condition] || product.condition,
       images: product.images ? JSON.parse(product.images) : [],
-      price: parseFloat(product.price)
+      price: parseFloat(product.price),
+      viewCount: parseInt(product.viewCount) || 0
     }
 
     return NextResponse.json(transformedProduct)

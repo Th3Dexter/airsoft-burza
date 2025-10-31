@@ -32,9 +32,8 @@ export function Sidebar() {
 
   const navigation = [
     { name: 'Domů', href: '/', icon: Home },
-    { name: 'Airsoft zbraně', href: '/products/airsoft-weapons', icon: Target },
-    { name: 'Military vybavení', href: '/products/military-equipment', icon: Shield },
-    { name: 'Ostatní', href: '/products/other', icon: Package },
+    { name: 'Poptávka', href: '/poptavka', icon: Target },
+    { name: 'Nabídka', href: '/nabidka', icon: Package },
     { name: 'O nás', href: '/about', icon: Info },
   ]
 
@@ -61,7 +60,7 @@ export function Sidebar() {
       {/* Sidebar */}
       <div className={`fixed left-0 top-0 z-30 h-screen bg-card border-r border-border transition-all duration-300 ease-in-out ${
         isOpen ? 'w-72' : 'w-16'
-      } overflow-hidden`} style={{ backgroundImage: 'none' }}>
+      } overflow-hidden opacity-70`} style={{ backgroundImage: 'none' }}>
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="p-4 border-b border-border">
@@ -88,23 +87,22 @@ export function Sidebar() {
           <nav className="flex-1 py-4">
             <div className="space-y-1 px-2">
               {navigation.map((item) => {
-                const IconComponent = item.icon
+                const IconComponent = (item as any).icon
                 return (
                   <Link
                     key={item.name}
-                    href={item.href}
+                    href={(item as any).href}
                     className={`group relative flex items-center p-3 text-foreground hover:text-muted-foreground hover:bg-military-charcoal rounded-lg transition-colors ${
                       isOpen ? 'justify-start' : 'justify-center'
                     }`}
                     title={!isOpen ? item.name : ''}
                   >
-                    <IconComponent className="h-5 w-5" />
+                    {IconComponent && <IconComponent className="h-5 w-5" />}
                     <span className={`ml-3 text-sm font-medium transition-all duration-300 ease-in-out ${
                       isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2 absolute'
                     }`}>
                       {item.name}
                     </span>
-                    {/* Tooltip for collapsed state */}
                     {!isOpen && (
                       <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
                         {item.name}
@@ -300,18 +298,20 @@ export function Sidebar() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => signIn()}
+                    asChild
                     className={`relative hover:bg-muted text-foreground transition-all duration-300 ease-in-out ${
                       isOpen ? 'w-full h-10 justify-start' : 'w-full h-10'
                     }`}
                     title={!isOpen ? 'Registrovat se' : ''}
                   >
-                    <UserPlus className="h-5 w-5" />
-                    <span className={`ml-3 text-sm font-medium transition-all duration-300 ease-in-out ${
-                      isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2 absolute'
-                    }`}>
-                      Registrovat se
-                    </span>
+                    <Link href="/auth/signup">
+                      <UserPlus className="h-5 w-5" />
+                      <span className={`ml-3 text-sm font-medium transition-all duration-300 ease-in-out ${
+                        isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2 absolute'
+                      }`}>
+                        Registrovat se
+                      </span>
+                    </Link>
                   </Button>
                 </div>
               )}

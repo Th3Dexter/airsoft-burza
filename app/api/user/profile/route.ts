@@ -4,6 +4,9 @@ import { authOptions } from '@/lib/auth'
 import { query, update } from '@/lib/mysql'
 import { sanitizeInput } from '@/lib/utils'
 
+// Force dynamic rendering - requires session data
+export const dynamic = 'force-dynamic'
+
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)

@@ -3,6 +3,11 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { query, queryOne, insert } from '@/lib/mysql'
 import { sanitizeInput } from '@/lib/utils'
+import { writeFile, mkdir } from 'fs/promises'
+import { join } from 'path'
+
+// Force dynamic rendering - requires session data for POST
+export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,19 +25,29 @@ export async function POST(request: NextRequest) {
     // Získání dat z formuláře
     const title = sanitizeInput(formData.get('title') as string || '')
     const description = sanitizeInput(formData.get('description') as string || '')
-    const price = parseFloat(formData.get('price') as string)
+    const priceRaw = formData.get('price')
+    const listingTypeRaw = formData.get('listingType') as string
+    
+    if (!listingTypeRaw || (listingTypeRaw !== 'nabizim' && listingTypeRaw !== 'shanim')) {
+      return NextResponse.json(
+        { message: 'Musíte vybrat sekci (Nabídka nebo Poptávka)' },
+        { status: 400 }
+      )
+    }
     const category = formData.get('category') as string
     const subcategory = sanitizeInput(formData.get('subcategory') as string || '')
     const condition = formData.get('condition') as string
     const location = formData.get('location') as string
     
     // Validace povinných polí
-    if (!title || !description || !price || !category || !condition || !location) {
+    if (!title || !description || !priceRaw || !category || !condition || !location) {
       return NextResponse.json(
         { message: 'Všechna povinná pole musí být vyplněna' },
         { status: 400 }
       )
     }
+    
+    const price = parseFloat(priceRaw as string)
 
     if (price <= 0) {
       return NextResponse.json(
@@ -59,9 +74,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Zpracování obrázků
+    // Validace typu inzerátu (listingType) - už je validováno výše
+
+    // Zpracování obrázků - hlavní obrázek se označí podle indexu z frontendu
     const images: string[] = []
     const imageFiles = formData.getAll('images') as File[]
+    const mainImageIndexRaw = formData.get('mainImageIndex')
+    const mainImageIndex = mainImageIndexRaw ? parseInt(mainImageIndexRaw as string, 10) : 0 // Default: první obrázek
     
     if (imageFiles.length === 0) {
       return NextResponse.json(
@@ -77,7 +96,53 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validace obrázků
+    // Validace obrázků (s fallbackem dle přípony pro případy, kdy chybí MIME type)
+    const allowedExtensions = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.heic', '.heif'])
+    const allowedMimes = new Set(['image/png','image/jpeg','image/webp','image/gif','image/jpg','image/x-png','image/pjpeg','image/heic','image/heif','image/heic-sequence','image/heif-sequence','application/octet-stream','binary/octet-stream'])
+    const getExtension = (name: string): string => {
+      const m = (name || '').toLowerCase().match(/\.[a-z0-9]+$/)
+      return m ? m[0] : ''
+    }
+    const sniffImage = async (f: File): Promise<boolean> => {
+      try {
+        const arr = new Uint8Array(await f.arrayBuffer())
+        if (arr.length >= 8) {
+          // PNG signature
+          const isPng = arr[0] === 0x89 && arr[1] === 0x50 && arr[2] === 0x4E && arr[3] === 0x47 && arr[4] === 0x0D && arr[5] === 0x0A && arr[6] === 0x1A && arr[7] === 0x0A
+          if (isPng) return true
+        }
+        if (arr.length >= 3) {
+          // JPEG signature FF D8 FF
+          const isJpeg = arr[0] === 0xFF && arr[1] === 0xD8 && arr[2] === 0xFF
+          if (isJpeg) return true
+        }
+        if (arr.length >= 12) {
+          // WEBP: RIFF....WEBP
+          const riff = String.fromCharCode(arr[0],arr[1],arr[2],arr[3])
+          const webp = String.fromCharCode(arr[8],arr[9],arr[10],arr[11])
+          const isWebp = riff === 'RIFF' && webp === 'WEBP'
+          if (isWebp) return true
+        }
+        if (arr.length >= 6) {
+          // GIF87a or GIF89a
+          const hdr = String.fromCharCode(arr[0],arr[1],arr[2],arr[3],arr[4],arr[5])
+          if (hdr === 'GIF87a' || hdr === 'GIF89a') return true
+        }
+        if (arr.length >= 12) {
+          // HEIC/HEIF brand in ftyp box
+          const brand = String.fromCharCode(arr[8],arr[9],arr[10],arr[11])
+          if (brand.toLowerCase().includes('heic') || brand.toLowerCase().includes('heif')) return true
+        }
+      } catch {}
+      return false
+    }
+    const isImageFile = async (f: File): Promise<boolean> => {
+      if (f.type && (f.type.startsWith('image/') || allowedMimes.has(f.type))) return true
+      const ext = getExtension(f.name || '')
+      if (allowedExtensions.has(ext)) return true
+      return await sniffImage(f)
+    }
+
     for (const file of imageFiles) {
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
         return NextResponse.json(
@@ -86,18 +151,123 @@ export async function POST(request: NextRequest) {
         )
       }
       
-      if (!file.type.startsWith('image/')) {
+      if (!(await isImageFile(file))) {
         return NextResponse.json(
-          { message: `Soubor ${file.name} není obrázek` },
+          { message: `Soubor ${file.name} není obrázek (podporované: PNG, JPG, JPEG, WEBP, GIF)` },
           { status: 400 }
         )
       }
     }
 
-    // TODO: Implementovat upload obrázků do cloudu (Cloudinary, AWS S3, atd.)
-    // Prozatím ukládáme placeholder URL
+    // Uložení obrázků do souborového systému
+    const uploadsDir = join(process.cwd(), 'public', 'uploads', 'products')
+    
+    // Vytvoření složky, pokud neexistuje
+    try {
+      await mkdir(uploadsDir, { recursive: true })
+    } catch (error) {
+      // Složka už existuje
+    }
+
+    // Uložení každého obrázku v původním pořadí - každý jen jednou
+    const baseTimestamp = Date.now()
+    let mainImagePath: string | null = null
+    
+    // Validace indexu hlavního obrázku - defaultně první (index 0)
+    const validMainImageIndex = (mainImageIndex !== undefined && mainImageIndex !== null && mainImageIndex >= 0 && mainImageIndex < imageFiles.length) 
+      ? mainImageIndex 
+      : 0
+    
     for (let i = 0; i < imageFiles.length; i++) {
-      images.push(`/images/placeholder-product-${i + 1}.jpg`)
+      const file = imageFiles[i]
+      
+      // Přeskočit prázdné nebo neplatné soubory
+      if (!file || file.size === 0) {
+        console.warn(`[WARN] Přeskakuji prázdný nebo neplatný soubor na indexu ${i}`)
+        continue
+      }
+      
+      try {
+        // Detekce přípony z názvu souboru - zachování původní přípony
+        let fileExtension = getExtension(file.name || '')
+        
+        // Pokud není přípona v názvu, zkus detekovat z MIME type
+        if (!fileExtension || fileExtension === '') {
+          if (file.type) {
+            if (file.type === 'image/jpeg' || file.type === 'image/jpg') {
+              fileExtension = '.jpg'
+            } else if (file.type === 'image/png') {
+              fileExtension = '.png'
+            } else if (file.type === 'image/webp') {
+              fileExtension = '.webp'
+            } else if (file.type === 'image/gif') {
+              fileExtension = '.gif'
+            } else if (file.type === 'image/heic' || file.type === 'image/heif') {
+              fileExtension = '.heic'
+            }
+          }
+        }
+        
+        // Pokud stále není přípona, použij .jpg jako fallback
+        if (!fileExtension || fileExtension === '') {
+          fileExtension = '.jpg'
+        }
+        
+        // Normalizace .jpeg -> .jpg pro konzistenci
+        if (fileExtension.toLowerCase() === '.jpeg') {
+          fileExtension = '.jpg'
+        }
+        
+        // Vytvoření unikátního názvu souboru
+        const randomString = Math.random().toString(36).substring(2, 15)
+        const fileName = `${baseTimestamp}_${i}_${randomString}${fileExtension}`
+        const filePath = join(uploadsDir, fileName)
+        
+        // Konverze File na Buffer a uložení - validace před uložením
+        const bytes = await file.arrayBuffer()
+        if (bytes.byteLength === 0) {
+          console.warn(`[WARN] Přeskakuji prázdný soubor: ${file.name}`)
+          continue
+        }
+        
+        const buffer = Buffer.from(bytes)
+        await writeFile(filePath, buffer)
+        
+        // Přidání URL cesty (relativní k public složce) - pouze pokud se úspěšně uložilo
+        const savedPath = `/uploads/products/${fileName}`
+        images.push(savedPath)
+        
+        // Nastavit hlavní obrázek podle indexu z frontendu (nebo první pokud není vybrán)
+        if (i === validMainImageIndex) {
+          mainImagePath = savedPath
+        }
+      } catch (error) {
+        console.error(`Chyba při ukládání obrázku ${file.name || `index ${i}`}:`, error)
+        // Pokračovat s dalšími obrázky místo ukončení
+        continue
+      }
+    }
+    
+    // Validace - musí být alespoň jeden obrázek
+    if (images.length === 0) {
+      return NextResponse.json(
+        { message: 'Nepodařilo se uložit žádný obrázek' },
+        { status: 400 }
+      )
+    }
+    
+    // Pokud nebyl hlavní obrázek nastaven (např. kvůli chybě), použij první
+    if (!mainImagePath && images.length > 0) {
+      mainImagePath = images[0]
+    }
+
+    // Bezpečně zajistit existenci sloupce mainImage (před images)
+    try {
+      await insert(
+        "ALTER TABLE products ADD COLUMN mainImage VARCHAR(512) NULL AFTER `condition`"
+      )
+    } catch (e) {
+      // Sloupec už pravděpodobně existuje – ignorovat
     }
 
     // Mapování kategorií
@@ -116,22 +286,30 @@ export async function POST(request: NextRequest) {
       'poor': 'POOR'
     }
 
+    // Generování unikátního ID pro produkt
+    const productId = `product_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
     // Vytvoření produktu v databázi
-    const productId = await insert(
-      `INSERT INTO products (title, description, price, category, subcategory, \`condition\`, images, location, userId, isActive, isSold, createdAt, updatedAt) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+    await insert(
+      `INSERT INTO products (id, title, description, price, listingType, category, subcategory, \`condition\`, mainImage, images, location, userId, isActive, isSold, createdAt, updatedAt) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
       [
-        title,
-        description,
-        price,
-        categoryMap[category],
-        subcategory || null,
-        conditionMap[condition],
-        JSON.stringify(images),
-        location,
-        (session!.user as any).id,
-        true,
-        false
+        productId,              // 1. id
+        title,                  // 2. title
+        description,            // 3. description
+        price,                  // 4. price
+        // Explicitní mapování: nabizim -> NABIZIM (Nabídka), shanim -> SHANIM (Poptávka)
+        listingTypeRaw === 'nabizim' ? 'NABIZIM' : 'SHANIM',  // 5. listingType
+        categoryMap[category],   // 6. category
+        subcategory || null,     // 7. subcategory
+        conditionMap[condition], // 8. condition
+        mainImagePath,          // 9. mainImage
+        JSON.stringify(images), // 10. images
+        location,               // 11. location
+        (session!.user as any).id, // 12. userId
+        true,                   // 13. isActive
+        false                   // 14. isSold
+        // createdAt a updatedAt jsou NOW() v SQL
       ]
     )
 
@@ -169,6 +347,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '12')
     const category = searchParams.get('category')
+    const listingType = searchParams.get('listingType') // 'nabizim' | 'shanim'
     const search = searchParams.get('search')
     const minPrice = searchParams.get('minPrice')
     const maxPrice = searchParams.get('maxPrice')
@@ -188,6 +367,12 @@ export async function GET(request: NextRequest) {
       }
       whereConditions.push('p.category = ?')
       params.push(categoryMap[category])
+    }
+
+    if (listingType) {
+      const lt = listingType === 'shanim' ? 'SHANIM' : 'NABIZIM'
+      whereConditions.push('p.listingType = ?')
+      params.push(lt)
     }
 
     if (search) {
@@ -263,7 +448,7 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit
     
     const products = await query(
-      `SELECT p.*, u.id as userId, u.name as userName, u.email as userEmail, u.image as userImage, u.isVerified as userIsVerified
+      `SELECT p.*, u.id as userId, u.name as userName, u.email as userEmail, u.image as userImage, u.isVerified as userIsVerified, COALESCE(p.viewCount, 0) as viewCount
        FROM products p 
        JOIN users u ON p.userId = u.id 
        ${whereClause}
@@ -281,8 +466,35 @@ export async function GET(request: NextRequest) {
 
     const totalPages = Math.ceil(totalCount / limit)
 
+    // Transformace dat pro frontend
+    const transformedProducts = Array.isArray(products) ? products.map((product: any) => {
+      // Parsování obrázků
+      let images: string[] = []
+      try {
+        if (product.images) {
+          if (typeof product.images === 'string') {
+            const parsed = JSON.parse(product.images)
+            images = Array.isArray(parsed) ? parsed : []
+          } else if (Array.isArray(product.images)) {
+            images = product.images
+          }
+          // Filtrovat pouze validní stringy
+          images = images.filter((img: any) => img && typeof img === 'string' && img.trim().length > 0)
+        }
+      } catch (e) {
+        images = []
+      }
+
+      return {
+        ...product,
+        images,
+        price: parseFloat(product.price) || 0,
+        viewCount: parseInt(product.viewCount) || 0
+      }
+    }) : []
+
     return NextResponse.json({
-      products,
+      products: transformedProducts,
       pagination: {
         page,
         limit,

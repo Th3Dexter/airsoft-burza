@@ -39,3 +39,4 @@ export async function update(sql: string, params?: any[]) {
   const [result] = await pool.execute(sql, params) as any
   return result.affectedRows
 }
+

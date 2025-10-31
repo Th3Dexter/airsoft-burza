@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { query, queryOne } from '@/lib/mysql'
 
+// Force dynamic rendering - requires session data
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)

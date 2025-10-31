@@ -82,20 +82,8 @@ export function ProductSearch({ searchParams: propSearchParams }: ProductSearchP
     }
     params.delete('page') // Reset to first page
     
-    // Zachovej aktuální kategorii při vyhledávání
     const currentPath = window.location.pathname
-    if (currentPath.includes('/airsoft-weapons')) {
-      params.set('category', 'airsoft-weapons')
-      router.push(`/products/airsoft-weapons?${params.toString()}`)
-    } else if (currentPath.includes('/military-equipment')) {
-      params.set('category', 'military-equipment')
-      router.push(`/products/military-equipment?${params.toString()}`)
-    } else if (currentPath.includes('/other')) {
-      params.set('category', 'other')
-      router.push(`/products/other?${params.toString()}`)
-    } else {
-      router.push(`/products?${params.toString()}`)
-    }
+    router.push(`${currentPath}?${params.toString()}`)
   }
 
   const clearSearch = () => {
@@ -104,17 +92,8 @@ export function ProductSearch({ searchParams: propSearchParams }: ProductSearchP
     params.delete('search')
     params.delete('page')
     
-    // Zachovej aktuální kategorii při vymazání vyhledávání
     const currentPath = window.location.pathname
-    if (currentPath.includes('/airsoft-weapons')) {
-      router.push('/products/airsoft-weapons')
-    } else if (currentPath.includes('/military-equipment')) {
-      router.push('/products/military-equipment')
-    } else if (currentPath.includes('/other')) {
-      router.push('/products/other')
-    } else {
-      router.push('/products')
-    }
+    router.push(currentPath)
   }
 
   const updateFilter = (key: string, value: string) => {
@@ -130,20 +109,8 @@ export function ProductSearch({ searchParams: propSearchParams }: ProductSearchP
     }
     params.delete('page') // Reset to first page
     
-    // Zachovej aktuální kategorii při změně filtrů
     const currentPath = window.location.pathname
-    if (currentPath.includes('/airsoft-weapons')) {
-      params.set('category', 'airsoft-weapons')
-      router.push(`/products/airsoft-weapons?${params.toString()}`)
-    } else if (currentPath.includes('/military-equipment')) {
-      params.set('category', 'military-equipment')
-      router.push(`/products/military-equipment?${params.toString()}`)
-    } else if (currentPath.includes('/other')) {
-      params.set('category', 'other')
-      router.push(`/products/other?${params.toString()}`)
-    } else {
-      router.push(`/products?${params.toString()}`)
-    }
+    router.push(`${currentPath}?${params.toString()}`)
   }
 
   const clearAllFilters = () => {
@@ -155,17 +122,8 @@ export function ProductSearch({ searchParams: propSearchParams }: ProductSearchP
       sort: 'newest'
     })
     
-    // Zachovej aktuální kategorii při vymazání filtrů
     const currentPath = window.location.pathname
-    if (currentPath.includes('/airsoft-weapons')) {
-      router.push('/products/airsoft-weapons')
-    } else if (currentPath.includes('/military-equipment')) {
-      router.push('/products/military-equipment')
-    } else if (currentPath.includes('/other')) {
-      router.push('/products/other')
-    } else {
-      router.push('/products')
-    }
+    router.push(currentPath)
   }
 
   const toggleFilters = () => {

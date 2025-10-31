@@ -11,8 +11,10 @@ export default function ProductsPage() {
   const searchParams = useSearchParams()
   
   // Získání parametrů z URL
+  // /products zobrazuje pouze produkty z kategorie "nabízím" (NABIZIM)
   const params = {
     category: searchParams.get('category') || '',
+    listingType: 'nabizim' as const, // Vždy zobrazit jen nabídky
     search: searchParams.get('search') || '',
     minPrice: searchParams.get('minPrice') || '',
     maxPrice: searchParams.get('maxPrice') || '',
@@ -29,10 +31,10 @@ export default function ProductsPage() {
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-black dark:text-white mb-4">
-              Všechny produkty
+              Nabídky produktů
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-300">
-              Prohlédněte si všechny dostupné produkty na naší platformě
+              Prohlédněte si všechny dostupné nabídky na naší platformě
             </p>
           </div>
 

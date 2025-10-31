@@ -3,14 +3,12 @@
 import { Footer } from '@/components/layout/Footer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Mail, Lock, Eye, EyeOff, User } from 'lucide-react'
+import { } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { signIn, getProviders } from 'next-auth/react'
 
 export default function SignUpPage() {
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [providers, setProviders] = useState<any>(null)
 
   useEffect(() => {
@@ -75,125 +73,9 @@ export default function SignUpPage() {
                 })}
               </div>
 
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300 dark:border-gray-600" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white dark:bg-gray-900 text-gray-500">nebo</span>
-                </div>
-              </div>
-
-              {/* Registration Form */}
-              <form className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Jméno
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                    <input
-                      type="text"
-                      placeholder="Vaše jméno"
-                      className="w-full pl-10 pr-4 py-3 border-2 border-border bg-card rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 dark:text-white"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Email
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                    <input
-                      type="email"
-                      placeholder="vas@email.cz"
-                      className="w-full pl-10 pr-4 py-3 border-2 border-border bg-card rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 dark:text-white"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Heslo
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="Vaše heslo"
-                      className="w-full pl-10 pr-12 py-3 border-2 border-border bg-card rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 dark:text-white"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                    >
-                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Potvrdit heslo
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                    <input
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      placeholder="Potvrďte heslo"
-                      className="w-full pl-10 pr-12 py-3 border-2 border-border bg-card rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 dark:text-white"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                    >
-                      {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 text-gray-600 focus:ring-gray-500 border-gray-300 rounded"
-                    required
-                  />
-                  <span className="ml-2 text-sm text-gray-600 dark:text-gray-300">
-                    Souhlasím s{' '}
-                    <Link href="/terms" className="text-gray-600 hover:text-gray-500 dark:text-gray-400 underline">
-                      obchodními podmínkami
-                    </Link>{' '}
-                    a{' '}
-                    <Link href="/privacy" className="text-gray-600 hover:text-gray-500 dark:text-gray-400 underline">
-                      zásadami ochrany osobních údajů
-                    </Link>
-                  </span>
-                </div>
-
-                <Button className="w-full bg-black hover:bg-gray-800 text-white">
-                  Registrovat se
-                </Button>
-              </form>
-
-              <div className="text-center">
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Už máte účet?{' '}
-                  <Link
-                    href="/auth/signin"
-                    className="text-gray-600 hover:text-gray-500 dark:text-gray-400 font-medium"
-                  >
-                    Přihlaste se
-                  </Link>
-                </p>
-              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-300 text-center">
+                Registrace je dostupná pouze přes Google účet.
+              </p>
             </CardContent>
           </Card>
         </div>

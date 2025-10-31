@@ -1,15 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardFooter } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { 
-  Heart, 
-  MessageCircle, 
   MapPin, 
   Clock, 
-  Star, 
   Eye,
   Grid3X3,
   List,
@@ -20,6 +18,7 @@ import Link from 'next/link'
 import { formatPrice } from '@/lib/utils'
 
 interface Product {
+  mainImage?: string | null
   id: string
   title: string
   description: string
@@ -31,17 +30,16 @@ interface Product {
   reviews?: number
   isNew?: boolean
   category: string
-  seller: {
-    name: string
-    verified: boolean
-    rating?: number
-  }
+  userName?: string
+  userIsVerified?: boolean
+  viewCount?: number
   createdAt: string
 }
 
 interface ProductGridProps {
   searchParams: {
     category?: string
+    listingType?: 'nabizim' | 'shanim'
     search?: string
     minPrice?: string
     maxPrice?: string
@@ -53,6 +51,7 @@ interface ProductGridProps {
 }
 
 export function ProductGrid({ searchParams }: ProductGridProps) {
+  const router = useRouter()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
@@ -69,6 +68,7 @@ export function ProductGrid({ searchParams }: ProductGridProps) {
         const params = new URLSearchParams()
         
         if (searchParams.category) params.append('category', searchParams.category)
+        if (searchParams.listingType) params.append('listingType', searchParams.listingType)
         if (searchParams.search) params.append('search', searchParams.search)
         if (searchParams.minPrice) params.append('minPrice', searchParams.minPrice)
         if (searchParams.maxPrice) params.append('maxPrice', searchParams.maxPrice)
@@ -177,83 +177,112 @@ export function ProductGrid({ searchParams }: ProductGridProps) {
         : 'space-y-4'
       }>
         {products.map((product) => (
-          <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-            <div className="aspect-w-16 aspect-h-9 bg-gray-200 dark:bg-gray-700">
-              {product.images && product.images.length > 0 && product.images[0] && product.images[0].startsWith('/') ? (
-                <Image
-                  src={product.images[0]}
-                  alt={product.title}
-                  width={400}
-                  height={300}
-                  className="w-full h-64 object-cover"
-                />
-              ) : (
-                <div className="w-full h-64 flex items-center justify-center">
-                  <Package className="h-12 w-12 text-gray-400" />
-                </div>
-              )}
-            </div>
-            
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-2">
-                <h3 className="font-semibold text-slate-900 dark:text-white text-lg line-clamp-2">
-                  {product.title}
-                </h3>
+          <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full relative">
+            {/* Obrázek - fixní výška */}
+            <div className="relative w-full h-64 bg-gray-200 dark:bg-gray-700">
+              {/* Štítky vpravo nahoře na obrázku */}
+              <div className="absolute top-2 right-2 z-10 flex flex-col gap-1">
+                {/* Placeholder pro budoucí štítky - lze přidat podle potřeby */}
                 {product.isNew && (
-                  <Badge variant="secondary" className="ml-2">
+                  <Badge variant="secondary" className="text-xs">
                     Nové
                   </Badge>
                 )}
               </div>
+              {(() => {
+                const cover = (product as any).mainImage && typeof (product as any).mainImage === 'string' && (product as any).mainImage.trim().length > 0
+                  ? (product as any).mainImage
+                  : (product.images && Array.isArray(product.images) && product.images.length > 0 && typeof product.images[0] === 'string'
+                      ? product.images[0]
+                      : null)
+                return cover ? (
+                <Link href={`/products/${product.id}`}>
+                  <Image
+                    src={cover}
+                    alt={product.title}
+                    width={400}
+                    height={256}
+                    className="w-full h-64 object-cover cursor-pointer"
+                    unoptimized
+                  />
+                </Link>
+                ) : (
+                <div className="w-full h-64 flex items-center justify-center">
+                  <Package className="h-12 w-12 text-gray-400" />
+                </div>
+                )
+              })()}
+            </div>
+            
+            {/* Obsah - flex-grow pro stejnou výšku */}
+            <CardContent className="p-4 flex flex-col flex-grow">
+              {/* Název - fixní výška s line-clamp */}
+              <Link href={`/products/${product.id}`} className="hover:underline mb-2">
+                <h3 className="font-semibold text-slate-900 dark:text-white text-lg line-clamp-2 min-h-[3.5rem]">
+                  {product.title}
+                </h3>
+              </Link>
               
-              <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
+              {/* Popis - fixní výška s line-clamp */}
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2 min-h-[2.5rem]">
                 {product.description}
               </p>
               
-              <div className="flex items-center justify-between mb-3">
+              {/* Cena - fixní pozice */}
+              <div className="mb-3">
                 <span className="text-xl font-bold text-slate-900 dark:text-white">
                   {formatPrice(product.price)}
                 </span>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {product.category}
-                </span>
               </div>
               
-              <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-4">
+              {/* Lokace a datum - fixní pozice */}
+              <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-3">
                 <div className="flex items-center">
                   <MapPin className="h-3 w-3 mr-1" />
                   {product.location}
                 </div>
                 <div className="flex items-center">
                   <Clock className="h-3 w-3 mr-1" />
-                  {new Date(product.createdAt).toLocaleDateString('cs-CZ')}
+                  {new Date(product.createdAt).toLocaleString('cs-CZ', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
                 </div>
               </div>
               
-              <div className="flex items-center justify-between">
-                <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                  <span>Od: {product.seller?.name || 'Neznámý prodejce'}</span>
-                  {product.seller?.verified && (
+              {/* Prodejce a počet zobrazení - na stejné úrovni */}
+              <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300 mb-3">
+                <div className="flex items-center">
+                  <span>Od: {product.userName || 'Neznámý prodejce'}</span>
+                  {product.userIsVerified && (
                     <span className="ml-2 text-green-600 dark:text-green-400">✓</span>
                   )}
                 </div>
-                <div className="flex items-center space-x-1">
-                  <Button size="sm" variant="outline">
-                    <Heart className="h-4 w-4" />
-                  </Button>
-                  <Button size="sm" variant="outline">
-                    <MessageCircle className="h-4 w-4" />
-                  </Button>
+                {/* Počet zobrazení - vpravo na stejné úrovni jako prodejce */}
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  Zobrazeno: {product.viewCount || 0}×
                 </div>
               </div>
+              
+              {/* Spacer pro flex-grow */}
+              <div className="flex-grow"></div>
             </CardContent>
             
-            <CardFooter className="p-4 pt-0">
-              <Button asChild className="w-full">
-                <Link href={`/products/${product.id}`}>
-                  <Eye className="h-4 w-4 mr-2" />
-                  Zobrazit detail
-                </Link>
+            {/* Footer s tlačítkem - fixní pozice */}
+            <CardFooter className="p-4 pt-0 mt-auto">
+              <Button 
+                className="w-full" 
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  router.push(`/products/${product.id}`)
+                }}
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                Zobrazit podrobnosti
               </Button>
             </CardFooter>
           </Card>

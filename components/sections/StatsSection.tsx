@@ -1,108 +1,169 @@
-import { Users, Package, Shield, Star } from 'lucide-react'
+'use client'
 
-const stats = [
-  {
-    icon: Users,
-    value: '0',
-    label: 'Aktivních uživatelů',
-    description: 'Ověření prodejci a kupci'
-  },
-  {
-    icon: Package,
-    value: '0',
-    label: 'Prodaných produktů',
-    description: 'Úspěšné transakce'
-  },
-  {
-    icon: Star,
-    value: '0/5',
-    label: 'Hodnocení',
-    description: 'Spokojenost uživatelů'
-  }
-]
+import { useState, useEffect } from 'react'
+import { Card, CardContent } from '@/components/ui/Card'
+import { 
+  Package, 
+  TrendingUp, 
+  Calendar,
+  Eye,
+  Users,
+  Activity
+} from 'lucide-react'
 
-const trustFeatures = [
-  {
-    icon: Shield,
-    title: 'Ověření uživatelů',
-    description: 'Všichni prodejci jsou ověřeni a mají hodnocení od ostatních uživatelů'
-  },
-  {
-    icon: Shield,
-    title: 'Bezpečná komunikace',
-    description: 'Všechny zprávy jsou šifrované a komunikace probíhá přímo na platformě'
-  },
-  {
-    icon: Package,
-    title: 'Garance kvality',
-    description: 'Každý produkt je kontrolován a má detailní popis včetně fotografií'
-  }
-]
+interface StatsData {
+  totalActive: number
+  newLast24h: number
+  newLast7d: number
+  newLast30d: number
+  totalViews: number
+  avgViews: number
+  activeSellers: number
+}
 
 export function StatsSection() {
+  const [stats, setStats] = useState<StatsData | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/stats')
+        if (response.ok) {
+          const data = await response.json()
+          setStats(data)
+        }
+      } catch (error) {
+        console.error('Error fetching stats:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchStats()
+    // Aktualizovat statistiky každých 5 minut
+    const interval = setInterval(fetchStats, 5 * 60 * 1000)
+    return () => clearInterval(interval)
+  }, [])
+
+  if (loading) {
+    return (
+      <section className="py-16 lg:py-24 relative">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 opacity-80">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
+              Statistiky inzerátů
+            </h2>
+            <p className="text-lg text-muted-foreground">
+              Načítání statistik...
+            </p>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  const statsData = stats || {
+    totalActive: 0,
+    newLast24h: 0,
+    newLast7d: 0,
+    newLast30d: 0,
+    totalViews: 0,
+    avgViews: 0,
+    activeSellers: 0,
+  }
+
+  const statCards = [
+    {
+      title: 'Celkem aktivních inzerátů',
+      value: statsData.totalActive.toLocaleString('cs-CZ'),
+      icon: Package,
+      description: 'Aktuálně dostupné nabídky',
+      color: 'text-blue-500'
+    },
+    {
+      title: 'Nových za 24h',
+      value: statsData.newLast24h.toLocaleString('cs-CZ'),
+      icon: TrendingUp,
+      description: 'Přidáno dnes',
+      color: 'text-green-500'
+    },
+    {
+      title: 'Nových za 7 dní',
+      value: statsData.newLast7d.toLocaleString('cs-CZ'),
+      icon: Calendar,
+      description: 'Přidáno tento týden',
+      color: 'text-purple-500'
+    },
+    {
+      title: 'Nových za 30 dní',
+      value: statsData.newLast30d.toLocaleString('cs-CZ'),
+      icon: Activity,
+      description: 'Přidáno tento měsíc',
+      color: 'text-orange-500'
+    },
+    {
+      title: 'Celkem zobrazení',
+      value: statsData.totalViews.toLocaleString('cs-CZ'),
+      icon: Eye,
+      description: 'Všechna zobrazení',
+      color: 'text-cyan-500'
+    },
+    {
+      title: 'Průměrně zobrazení/inzerát',
+      value: statsData.avgViews.toLocaleString('cs-CZ'),
+      icon: Eye,
+      description: 'Průměr na inzerát',
+      color: 'text-indigo-500'
+    },
+    {
+      title: 'Aktivních prodejců',
+      value: statsData.activeSellers.toLocaleString('cs-CZ'),
+      icon: Users,
+      description: 'S aktivními inzeráty',
+      color: 'text-pink-500'
+    },
+  ]
+
   return (
-    <section className="py-16 lg:py-24">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-16 lg:py-24 relative">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 opacity-80">
         <div className="text-center mb-16">
-          <h2 className="text-3xl lg:text-4xl font-bold text-black dark:text-white mb-4">
-            Důvěřují nám tisíce uživatelů
+          <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
+            Statistiky inzerátů
           </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            Naše platforma je největší airsoft burza v České republice
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+            Aktuální přehled všech inzerátů na naší platformě
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {stats.map((stat, index) => {
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {statCards.map((stat, index) => {
             const IconComponent = stat.icon
             return (
-              <div key={index} className="text-center group">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-lg mb-4 group-hover:bg-gray-200 dark:group-hover:bg-gray-700 transition-colors">
-                  <IconComponent className="h-8 w-8 text-gray-600 dark:text-gray-400" />
-                </div>
-                <div className="text-4xl font-bold text-black dark:text-white mb-2">
-                  {stat.value}
-                </div>
-                <div className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  {stat.label}
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {stat.description}
-                </div>
-              </div>
+              <Card key={index} className="hover:shadow-lg transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className={`p-3 rounded-lg bg-muted ${stat.color}`}>
+                      <IconComponent className="h-6 w-6" />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <div className="text-3xl font-bold text-foreground">
+                      {stat.value}
+                    </div>
+                    <div className="text-sm font-medium text-foreground">
+                      {stat.title}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {stat.description}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             )
           })}
-        </div>
-
-        {/* Trust Features */}
-        <div className="mt-16 pt-16 border-t border-gray-200 dark:border-gray-700">
-          <div className="text-center mb-12">
-            <h3 className="text-2xl font-bold text-black dark:text-white mb-4">
-              Bezpečnost a důvěryhodnost
-            </h3>
-            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-              Vaše bezpečnost je naší prioritou
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {trustFeatures.map((feature, index) => {
-              const IconComponent = feature.icon
-              return (
-                <div key={index} className="text-center group">
-                  <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-lg mb-4 group-hover:bg-gray-200 dark:group-hover:bg-gray-700 transition-colors">
-                    <IconComponent className="h-6 w-6 text-gray-600 dark:text-gray-400" />
-                  </div>
-                  <h4 className="text-lg font-semibold text-black dark:text-white mb-2">
-                    {feature.title}
-                  </h4>
-                  <p className="text-gray-600 dark:text-gray-300 text-sm">
-                    {feature.description}
-                  </p>
-                </div>
-              )
-            })}
-          </div>
         </div>
       </div>
     </section>

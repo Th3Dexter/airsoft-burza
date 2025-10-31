@@ -27,7 +27,7 @@ export function Footer() {
   }
 
   return (
-    <footer className="bg-black text-white mt-auto">
+    <footer className="bg-background text-foreground border-t border-border mt-auto">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Brand Section */}
@@ -42,18 +42,18 @@ export function Footer() {
                 priority
               />
             </div>
-            <p className="text-gray-400 text-sm mb-6 leading-relaxed">
+            <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
               Platforma pro prodej a nákup airsoftových zbraní a military vybavení.
               Bezpečná komunikace a ověření uživatelů.
             </p>
             <div className="flex space-x-3">
-              <a href="#" className="h-8 w-8 bg-gray-800 hover:bg-gray-700 rounded-lg flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+              <a href="#" className="h-8 w-8 bg-muted hover:bg-[#1e251e] rounded-lg flex items-center justify-center text-muted-foreground hover:text-white transition-colors">
                 <Facebook className="h-4 w-4" />
               </a>
-              <a href="#" className="h-8 w-8 bg-gray-800 hover:bg-gray-700 rounded-lg flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+              <a href="#" className="h-8 w-8 bg-muted hover:bg-[#1e251e] rounded-lg flex items-center justify-center text-muted-foreground hover:text-white transition-colors">
                 <Instagram className="h-4 w-4" />
               </a>
-              <a href="#" className="h-8 w-8 bg-gray-800 hover:bg-gray-700 rounded-lg flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+              <a href="#" className="h-8 w-8 bg-muted hover:bg-[#1e251e] rounded-lg flex items-center justify-center text-muted-foreground hover:text-white transition-colors">
                 <Twitter className="h-4 w-4" />
               </a>
             </div>
@@ -61,7 +61,7 @@ export function Footer() {
 
           {/* Products */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 text-white">
+            <h3 className="text-lg font-semibold mb-4 text-foreground">
               Produkty
             </h3>
             <ul className="space-y-2">
@@ -69,7 +69,7 @@ export function Footer() {
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-gray-400 hover:text-white transition-colors text-sm"
+                    className="text-muted-foreground hover:text-foreground transition-colors text-sm"
                   >
                     {link.name}
                   </Link>
@@ -80,7 +80,7 @@ export function Footer() {
 
           {/* Support */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 text-white">
+            <h3 className="text-lg font-semibold mb-4 text-foreground">
               Podpora
             </h3>
             <ul className="space-y-2">
@@ -88,7 +88,7 @@ export function Footer() {
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-gray-400 hover:text-white transition-colors text-sm"
+                    className="text-muted-foreground hover:text-foreground transition-colors text-sm"
                   >
                     {link.name}
                   </Link>
@@ -99,7 +99,7 @@ export function Footer() {
 
           {/* Company */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 text-white">
+            <h3 className="text-lg font-semibold mb-4 text-foreground">
               Společnost
             </h3>
             <ul className="space-y-2">
@@ -107,7 +107,7 @@ export function Footer() {
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-gray-400 hover:text-white transition-colors text-sm"
+                    className="text-muted-foreground hover:text-foreground transition-colors text-sm"
                   >
                     {link.name}
                   </Link>
@@ -119,9 +119,9 @@ export function Footer() {
         </div>
 
         {/* Bottom Section */}
-        <div className="border-t border-gray-800 mt-8 pt-6">
+        <div className="border-t border-border mt-8 pt-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <div className="text-gray-400 text-sm">
+            <div className="text-muted-foreground text-sm">
               © {currentYear} Airsoft Burza. Všechna práva vyhrazena.
             </div>
             <div className="flex flex-wrap gap-6">
@@ -129,7 +129,7 @@ export function Footer() {
                 <Link
                   key={link.name}
                   href={link.href}
-                  className="text-gray-400 hover:text-white transition-colors text-sm"
+                  className="text-muted-foreground hover:text-foreground transition-colors text-sm"
                 >
                   {link.name}
                 </Link>
