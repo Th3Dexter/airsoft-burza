@@ -17,8 +17,26 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const userId = (session!.user as any).id
     const { searchParams } = new URL(request.url)
+    const requestedUserId = searchParams.get('userId')
+    const currentUserId = (session!.user as any).id
+    const isAdmin = (session!.user as any).isAdmin || false
+    
+    // Pokud je zadán userId parametr, zkontrolovat oprávnění
+    // Pouze admin může zobrazit produkty jiného uživatele
+    let userId = currentUserId
+    if (requestedUserId) {
+      if (isAdmin) {
+        userId = requestedUserId
+      } else {
+        // Pokud není admin, může zobrazit pouze své produkty
+        return NextResponse.json(
+          { message: 'Nemáte oprávnění zobrazit produkty jiného uživatele' },
+          { status: 403 }
+        )
+      }
+    }
+    
     const status = searchParams.get('status') || 'all' // all, active, sold
 
     // Vytvoření WHERE podmínek

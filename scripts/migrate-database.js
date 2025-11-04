@@ -49,6 +49,11 @@ async function migrateDatabase() {
         name: 'reputation',
         definition: "ENUM('VERY_GOOD', 'GOOD', 'NEUTRAL', 'BAD', 'VERY_BAD') NOT NULL DEFAULT 'NEUTRAL'",
         description: 'Reputace uživatele'
+      },
+      {
+        name: 'isAdmin',
+        definition: 'BOOLEAN NOT NULL DEFAULT false',
+        description: 'Administrátorské oprávnění'
       }
     ]
     
@@ -157,6 +162,126 @@ async function migrateDatabase() {
       } else {
         console.log(`⏭️  Sloupec ${column.name} již existuje`)
       }
+    }
+    
+    // Kontrola existence tabulky services
+    const [servicesTables] = await connection.execute(`
+      SELECT TABLE_NAME 
+      FROM INFORMATION_SCHEMA.TABLES 
+      WHERE TABLE_SCHEMA = 'burza_web' 
+      AND TABLE_NAME = 'services'
+    `)
+    
+    if (servicesTables.length === 0) {
+      console.log('➕ Přidávám tabulku: services')
+      await connection.execute(`
+        CREATE TABLE services (
+          id VARCHAR(191) PRIMARY KEY,
+          name VARCHAR(191) NOT NULL,
+          description TEXT NOT NULL,
+          location VARCHAR(191) NOT NULL,
+          contactEmail VARCHAR(191) NOT NULL,
+          contactPhone VARCHAR(191),
+          image VARCHAR(512),
+          rating DECIMAL(3,2) DEFAULT NULL,
+          reviewCount INT NOT NULL DEFAULT 0,
+          isActive BOOLEAN NOT NULL DEFAULT true,
+          createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          updatedAt DATETIME(3) NOT NULL,
+          userId VARCHAR(191) NOT NULL,
+          FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+        )
+      `)
+      console.log('✅ Tabulka services byla úspěšně vytvořena')
+    } else {
+      console.log('⏭️  Tabulka services již existuje')
+    }
+    
+    // Kontrola existence sloupců v services
+    const [serviceColumns] = await connection.execute(`
+      SELECT COLUMN_NAME 
+      FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_SCHEMA = 'burza_web' 
+      AND TABLE_NAME = 'services'
+    `)
+    
+    const existingServiceColumns = serviceColumns.map(col => col.COLUMN_NAME)
+    console.log('🔧 Existující sloupce (services):', existingServiceColumns)
+    
+    // Přidání sloupce additionalImages do services
+    if (!existingServiceColumns.includes('additionalImages')) {
+      console.log('➕ Přidávám sloupec: additionalImages do services')
+      await connection.execute(`
+        ALTER TABLE services 
+        ADD COLUMN additionalImages JSON NULL AFTER image
+      `)
+      console.log('✅ Sloupec additionalImages byl úspěšně přidán')
+    } else {
+      console.log('⏭️  Sloupec additionalImages již existuje')
+    }
+    
+    // Kontrola existence tabulky service_reviews
+    const [reviewsTables] = await connection.execute(`
+      SELECT TABLE_NAME 
+      FROM INFORMATION_SCHEMA.TABLES 
+      WHERE TABLE_SCHEMA = 'burza_web' 
+      AND TABLE_NAME = 'service_reviews'
+    `)
+    
+    if (reviewsTables.length === 0) {
+      console.log('➕ Přidávám tabulku: service_reviews')
+      await connection.execute(`
+        CREATE TABLE service_reviews (
+          id VARCHAR(191) PRIMARY KEY,
+          serviceId VARCHAR(191) NOT NULL,
+          userId VARCHAR(191) NOT NULL,
+          ratingSpeed INT NOT NULL CHECK (ratingSpeed >= 1 AND ratingSpeed <= 5),
+          ratingQuality INT NOT NULL CHECK (ratingQuality >= 1 AND ratingQuality <= 5),
+          ratingCommunication INT NOT NULL CHECK (ratingCommunication >= 1 AND ratingCommunication <= 5),
+          ratingPrice INT NOT NULL CHECK (ratingPrice >= 1 AND ratingPrice <= 5),
+          ratingOverall INT NOT NULL CHECK (ratingOverall >= 1 AND ratingOverall <= 5),
+          comment TEXT,
+          images JSON,
+          createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          updatedAt DATETIME(3) NOT NULL,
+          FOREIGN KEY (serviceId) REFERENCES services(id) ON DELETE CASCADE,
+          FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+          UNIQUE KEY service_reviews_serviceId_userId_key (serviceId, userId)
+        )
+      `)
+      console.log('✅ Tabulka service_reviews byla úspěšně vytvořena')
+    } else {
+      console.log('⏭️  Tabulka service_reviews již existuje')
+    }
+    
+    // Kontrola existence tabulky reports
+    const [reportsTables] = await connection.execute(`
+      SELECT TABLE_NAME 
+      FROM INFORMATION_SCHEMA.TABLES 
+      WHERE TABLE_SCHEMA = 'burza_web' 
+      AND TABLE_NAME = 'reports'
+    `)
+    
+    if (reportsTables.length === 0) {
+      console.log('➕ Přidávám tabulku: reports')
+      await connection.execute(`
+        CREATE TABLE reports (
+          id VARCHAR(191) PRIMARY KEY,
+          type ENUM('BUG', 'FEATURE', 'SECURITY', 'OTHER') NOT NULL,
+          title VARCHAR(200) NOT NULL,
+          description TEXT NOT NULL,
+          email VARCHAR(191),
+          url VARCHAR(512),
+          status ENUM('PENDING', 'IN_PROGRESS', 'RESOLVED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
+          userId VARCHAR(191),
+          createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          updatedAt DATETIME(3) NOT NULL,
+          FOREIGN KEY (userId) REFERENCES users(id) ON DELETE SET NULL
+        )
+      `)
+      console.log('✅ Tabulka reports byla úspěšně vytvořena')
+    } else {
+      console.log('⏭️  Tabulka reports již existuje')
     }
     
     console.log('🎉 Migrace databáze dokončena!')

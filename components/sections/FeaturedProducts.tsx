@@ -21,22 +21,32 @@ export function FeaturedProducts() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    let isCancelled = false
+    
     const fetchProducts = async () => {
       try {
-        // Načíst posledních 9 přidaných inzerátů (seřazené podle data, jen nabídky)
-        const response = await fetch('/api/products?limit=9&sort=newest&listingType=nabizim')
-        if (response.ok) {
+        // Načíst poslední 3 přidané inzeráty (seřazené podle data, jen nabídky)
+        const response = await fetch('/api/products?limit=3&sort=newest&listingType=nabizim')
+        if (response.ok && !isCancelled) {
           const data = await response.json()
           setProducts(data.products || [])
         }
       } catch (error) {
-        console.error('Error fetching products:', error)
+        if (!isCancelled) {
+          console.error('Error fetching products:', error)
+        }
       } finally {
-        setIsLoading(false)
+        if (!isCancelled) {
+          setIsLoading(false)
+        }
       }
     }
 
     fetchProducts()
+    
+    return () => {
+      isCancelled = true
+    }
   }, [])
 
   if (isLoading) {
@@ -52,7 +62,7 @@ export function FeaturedProducts() {
           </p>
         </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(9)].map((_, i) => (
+            {[...Array(3)].map((_, i) => (
               <Card key={i} className="overflow-hidden">
                 <div className="aspect-w-16 aspect-h-9 bg-gray-200 dark:bg-gray-700 animate-pulse">
                   <div className="w-full h-64 bg-gray-300 dark:bg-gray-600"></div>

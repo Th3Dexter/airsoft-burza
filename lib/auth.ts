@@ -79,11 +79,24 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = (user as any).id
       }
+      
+      // Vždy načíst isAdmin z databáze (i pro existující tokeny)
+      if (token.id) {
+        const dbUser = await queryOne(
+          'SELECT isAdmin FROM users WHERE id = ?',
+          [token.id]
+        )
+        if (dbUser) {
+          token.isAdmin = dbUser.isAdmin || false
+        }
+      }
+      
       return token
     },
     async session({ session, token }) {
       if (token && token.id) {
         (session.user as any).id = token.id as string
+        (session.user as any).isAdmin = token.isAdmin || false
       }
       return session
     },

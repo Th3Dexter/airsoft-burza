@@ -392,8 +392,12 @@ export async function GET(request: NextRequest) {
         'military-equipment': 'MILITARY_EQUIPMENT',
         'other': 'OTHER'
       }
-      whereConditions.push('p.category = ?')
-      params.push(categoryMap[category])
+      // Zajistit, že category je v mapě před přidáním podmínky
+      const mappedCategory = categoryMap[category.toLowerCase().trim()]
+      if (mappedCategory) {
+        whereConditions.push('p.category = ?')
+        params.push(mappedCategory)
+      }
     }
 
     if (listingType) {
@@ -403,8 +407,9 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      whereConditions.push('(p.title LIKE ? OR p.description LIKE ? OR p.subcategory LIKE ?)')
-      const searchTerm = `%${search}%`
+      // Použít case-insensitive vyhledávání pomocí LOWER() pro lepší kompatibilitu
+      whereConditions.push('(LOWER(p.title) LIKE LOWER(?) OR LOWER(p.description) LIKE LOWER(?) OR LOWER(p.subcategory) LIKE LOWER(?))')
+      const searchTerm = `%${search.trim()}%`
       params.push(searchTerm, searchTerm, searchTerm)
     }
 

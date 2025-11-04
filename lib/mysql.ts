@@ -1,14 +1,16 @@
 import mysql from 'mysql2/promise'
 
 const connectionConfig = {
-  host: '127.0.0.1',
-  port: 3306,
-  user: 'root',
-  password: '',
-  database: 'burza_web',
+  host: process.env.DB_HOST || '127.0.0.1',
+  port: parseInt(process.env.DB_PORT || '3306'),
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'burza_web',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+  // Charset
+  charset: 'utf8mb4',
 }
 
 // Create connection pool

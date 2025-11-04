@@ -1,6 +1,7 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
-import { Facebook, Instagram, Twitter } from 'lucide-react'
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
@@ -13,16 +14,15 @@ export function Footer() {
       { name: 'Všechny produkty', href: '/products' },
     ],
     support: [
-      { name: 'Podpora', href: '/support' },
+      { name: 'FAQ', href: '/support' },
     ],
     company: [
       { name: 'O nás', href: '/about' },
     ],
     legal: [
-      { name: 'Obchodní podmínky', href: '/terms' },
       { name: 'Zásady ochrany osobních údajů', href: '/privacy' },
       { name: 'Cookies', href: '/cookies' },
-      { name: 'GDPR', href: '/gdpr' },
+      { name: 'Nahlásit problém', href: '/report' },
     ],
   }
 
@@ -46,17 +46,6 @@ export function Footer() {
               Platforma pro prodej a nákup airsoftových zbraní a military vybavení.
               Bezpečná komunikace a ověření uživatelů.
             </p>
-            <div className="flex space-x-3">
-              <a href="#" className="h-8 w-8 bg-muted hover:bg-[#1e251e] rounded-lg flex items-center justify-center text-muted-foreground hover:text-white transition-colors">
-                <Facebook className="h-4 w-4" />
-              </a>
-              <a href="#" className="h-8 w-8 bg-muted hover:bg-[#1e251e] rounded-lg flex items-center justify-center text-muted-foreground hover:text-white transition-colors">
-                <Instagram className="h-4 w-4" />
-              </a>
-              <a href="#" className="h-8 w-8 bg-muted hover:bg-[#1e251e] rounded-lg flex items-center justify-center text-muted-foreground hover:text-white transition-colors">
-                <Twitter className="h-4 w-4" />
-              </a>
-            </div>
           </div>
 
           {/* Products */}
@@ -78,10 +67,10 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Support */}
+          {/* FAQ */}
           <div>
             <h3 className="text-lg font-semibold mb-4 text-foreground">
-              Podpora
+              FAQ
             </h3>
             <ul className="space-y-2">
               {footerLinks.support.map((link) => (

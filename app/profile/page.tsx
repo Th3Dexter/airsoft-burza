@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
+import { useSearchParams } from 'next/navigation'
 import { Footer } from '@/components/layout/Footer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -10,10 +11,13 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { ProfileSkeleton } from '@/components/ui/Skeleton'
 import { User, Mail, Phone, MapPin, Edit, Shield, Star, Package, MessageCircle, Trash2, ThumbsUp, ThumbsDown, Minus } from 'lucide-react'
 
-export default function ProfilePage() {
+function ProfilePageContent() {
   const { data: session, status } = useSession()
+  const searchParams = useSearchParams()
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [viewingUserId, setViewingUserId] = useState<string | null>(null)
+  const [isOwnProfile, setIsOwnProfile] = useState(true)
   const [userData, setUserData] = useState({
     name: '',
     email: '',
@@ -100,27 +104,101 @@ export default function ProfilePage() {
   }
 
   useEffect(() => {
+    // Získání userId z URL parametrů - použijeme jak searchParams, tak window.location pro spolehlivost
+    const userIdParamFromSearch = searchParams?.get('userId')
+    let userIdParam = userIdParamFromSearch
+    
+    // Fallback na window.location, pokud searchParams nevrátí hodnotu
+    if (!userIdParam && typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      userIdParam = urlParams.get('userId')
+    }
+    
+    const currentUserId = (session?.user as any)?.id
+    
+    console.log('ProfilePage - useEffect userId:', { userIdParam, userIdParamFromSearch, currentUserId, windowLocation: typeof window !== 'undefined' ? window.location.search : 'N/A' })
+    
+    // Pokud je v URL userId parametr, použij ho
+    if (userIdParam) {
+      // Zkontroluj, zda je to jiný uživatel než aktuálně přihlášený
+      if (userIdParam !== currentUserId) {
+        // Zobrazujeme profil jiného uživatele
+        console.log('Setting viewingUserId to:', userIdParam)
+        setViewingUserId(userIdParam)
+        setIsOwnProfile(false)
+        setIsEditing(false) // Nelze editovat profil jiného uživatele
+      } else {
+        // userIdParam se shoduje s currentUserId - zobrazujeme vlastní profil
+        setViewingUserId(null)
+        setIsOwnProfile(true)
+      }
+    } else {
+      // Není userId parametr - zobrazujeme vlastní profil
+      setViewingUserId(null)
+      setIsOwnProfile(true)
+    }
+  }, [searchParams, session])
+
+  useEffect(() => {
     const fetchUserData = async () => {
-      if (session?.user) {
-        try {
-          // Načtení statistik z API
-          const response = await fetch('/api/user/stats')
-          if (response.ok) {
-            const statsData = await response.json()
-            setStats(statsData)
-            
-            // Nastavení uživatelských dat ze statistik
-            setUserData({
-              name: statsData.user.name || '',
-              email: statsData.user.email || '',
-              phone: statsData.user.phone || '',
-              city: statsData.user.city || '',
-              bio: statsData.user.bio || '',
-              nickname: statsData.user.nickname || '',
-              avatar: statsData.user.image || ''
-            })
-          } else {
-            // Fallback na session data
+      // Získání userId z URL parametrů (přímo, ne z state, protože state může být ještě neaktualizovaný)
+      let userIdParam = searchParams?.get('userId')
+      
+      // Fallback na window.location, pokud searchParams nevrátí hodnotu
+      if (!userIdParam && typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search)
+        userIdParam = urlParams.get('userId')
+      }
+      
+      const currentUserId = (session?.user as any)?.id
+      
+      // Debug logování
+      console.log('ProfilePage - fetchUserData:', { userIdParam, currentUserId, sessionReady: !!session?.user, windowLocation: typeof window !== 'undefined' ? window.location.search : 'N/A' })
+      
+      // Pokud není session, ale je userIdParam, počkej na session
+      // Pokud není ani session ani userIdParam, nelze načíst data
+      if (!session?.user && !userIdParam) {
+        setIsLoading(false)
+        return
+      }
+
+      // Pokud je userIdParam a není session, počkej na session (kvůli autorizaci)
+      if (userIdParam && !session?.user) {
+        return
+      }
+
+      try {
+        // Určení, který userId použít
+        // Pokud je userIdParam a je jiný než currentUserId, použij userIdParam
+        // Jinak použij currentUserId (nebo null, pokud není session)
+        const targetUserId = (userIdParam && userIdParam !== currentUserId) ? userIdParam : null
+        
+        console.log('ProfilePage - targetUserId:', targetUserId)
+        
+        // Sestavení URL s userId parametrem, pokud zobrazujeme profil jiného uživatele
+        const statsUrl = targetUserId 
+          ? `/api/user/stats?userId=${targetUserId}`
+          : '/api/user/stats'
+        
+        // Načtení statistik z API
+        const response = await fetch(statsUrl)
+        if (response.ok) {
+          const statsData = await response.json()
+          setStats(statsData)
+          
+          // Nastavení uživatelských dat ze statistik
+          setUserData({
+            name: statsData.user.name || '',
+            email: statsData.user.email || '',
+            phone: statsData.user.phone || '',
+            city: statsData.user.city || '',
+            bio: statsData.user.bio || '',
+            nickname: statsData.user.nickname || '',
+            avatar: statsData.user.image || ''
+          })
+        } else {
+          // Fallback na session data (pouze pro vlastní profil)
+          if (!targetUserId && session?.user) {
             setUserData({
               name: session.user.name || '',
               email: session.user.email || '',
@@ -131,16 +209,22 @@ export default function ProfilePage() {
               avatar: session.user.image || ''
             })
           }
+        }
 
-          // Načtení inzerátů uživatele
-          const productsResponse = await fetch('/api/user/products')
-          if (productsResponse.ok) {
-            const productsData = await productsResponse.json()
-            setProducts(productsData.products || [])
-          }
-        } catch (error) {
-          console.error('Error fetching user data:', error)
-          // Fallback na session data
+        // Načtení inzerátů uživatele
+        const productsUrl = targetUserId
+          ? `/api/user/products?userId=${targetUserId}`
+          : '/api/user/products'
+        
+        const productsResponse = await fetch(productsUrl)
+        if (productsResponse.ok) {
+          const productsData = await productsResponse.json()
+          setProducts(productsData.products || [])
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error)
+        // Fallback na session data (pouze pro vlastní profil)
+        if (!userIdParam && session?.user) {
           setUserData({
             name: session.user.name || '',
             email: session.user.email || '',
@@ -151,12 +235,13 @@ export default function ProfilePage() {
             avatar: session.user.image || ''
           })
         }
+      } finally {
         setIsLoading(false)
       }
     }
 
     fetchUserData()
-  }, [session])
+  }, [session, searchParams])
 
   if (status === 'loading' || isLoading) {
     return (
@@ -219,6 +304,8 @@ export default function ProfilePage() {
   }
 
   const handleDeleteProduct = async (productId: string, productName: string) => {
+    if (!isOwnProfile) return // Nelze mazat produkty jiného uživatele
+    
     const confirmed = await confirmDeleteProduct(productName)
     if (confirmed) {
       try {
@@ -227,11 +314,14 @@ export default function ProfilePage() {
         })
         
         if (response.ok) {
-        notifyProductDeleted()
+          notifyProductDeleted()
           // Aktualizace seznamu produktů
           setProducts(prev => prev.filter((p: any) => p.id !== productId))
           // Obnovení statistik
-          const statsResponse = await fetch('/api/user/stats')
+          const statsUrl = viewingUserId 
+            ? `/api/user/stats?userId=${viewingUserId}`
+            : '/api/user/stats'
+          const statsResponse = await fetch(statsUrl)
           if (statsResponse.ok) {
             const statsData = await statsResponse.json()
             setStats(statsData)
@@ -316,31 +406,33 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 </div>
-                {isEditing ? (
-                  <div className="flex space-x-2">
+                {isOwnProfile && (
+                  isEditing ? (
+                    <div className="flex space-x-2">
+                      <Button 
+                        onClick={handleSaveProfile}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Uložit
+                      </Button>
+                      <Button 
+                        onClick={() => setIsEditing(false)}
+                        variant="outline"
+                        className="border-military-charcoal text-military-text hover:bg-military-charcoal"
+                      >
+                        Zrušit
+                      </Button>
+                    </div>
+                  ) : (
                     <Button 
-                      onClick={handleSaveProfile}
-                      className="bg-green-600 hover:bg-green-700 text-white"
+                      onClick={() => setIsEditing(true)}
+                      className="bg-slate-700 hover:bg-slate-800 text-white"
                     >
                       <Edit className="h-4 w-4 mr-2" />
-                      Uložit
+                      Upravit profil
                     </Button>
-                    <Button 
-                      onClick={() => setIsEditing(false)}
-                      variant="outline"
-                      className="border-military-charcoal text-military-text hover:bg-military-charcoal"
-                    >
-                      Zrušit
-                    </Button>
-                  </div>
-                ) : (
-                  <Button 
-                    onClick={() => setIsEditing(true)}
-                    className="bg-slate-700 hover:bg-slate-800 text-white"
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Upravit profil
-                  </Button>
+                  )
                 )}
               </div>
             </div>
@@ -506,21 +598,25 @@ export default function ProfilePage() {
                             <span className="text-lg font-bold text-slate-700 dark:text-slate-300">
                               {product.price.toLocaleString('cs-CZ')} Kč
                             </span>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => window.location.href = `/products/edit/${product.id}`}
-                            >
-                              Upravit
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => handleDeleteProduct(product.id, product.title)}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {isOwnProfile && (
+                              <>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => window.location.href = `/products/edit/${product.id}`}
+                                >
+                                  Upravit
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => handleDeleteProduct(product.id, product.title)}
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
                           </div>
                         </div>
                       ))
@@ -528,15 +624,17 @@ export default function ProfilePage() {
                       <div className="text-center py-8">
                         <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                         <p className="text-gray-600 dark:text-gray-300 mb-4">
-                          Zatím nemáte žádné inzeráty
+                          {isOwnProfile ? 'Zatím nemáte žádné inzeráty' : 'Tento uživatel zatím nemá žádné inzeráty'}
                         </p>
-                        <Button 
-                          onClick={() => window.location.href = '/products/new'}
-                          className="bg-slate-700 hover:bg-slate-800 text-white"
-                        >
-                          <Package className="h-4 w-4 mr-2" />
-                          Vytvořit první inzerát
-                        </Button>
+                        {isOwnProfile && (
+                          <Button 
+                            onClick={() => window.location.href = '/products/new'}
+                            className="bg-slate-700 hover:bg-slate-800 text-white"
+                          >
+                            <Package className="h-4 w-4 mr-2" />
+                            Vytvořit první inzerát
+                          </Button>
+                        )}
                       </div>
                     )}
 
@@ -632,27 +730,28 @@ export default function ProfilePage() {
                 </Card>
               )}
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-xl text-slate-900 dark:text-white">
-                    Rychlé akce
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <Button 
-                    className="w-full bg-slate-700 hover:bg-slate-800 text-white"
-                    onClick={() => window.location.href = '/products/new'}
-                  >
-                    <Package className="h-4 w-4 mr-2" />
-                    Přidat inzerát
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => window.location.href = '/messages'}
-                  >
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Zprávy ({stats.messages.conversations})
+              {isOwnProfile && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-xl text-slate-900 dark:text-white">
+                      Rychlé akce
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Button 
+                      className="w-full bg-slate-700 hover:bg-slate-800 text-white"
+                      onClick={() => window.location.href = '/products/new'}
+                    >
+                      <Package className="h-4 w-4 mr-2" />
+                      Přidat inzerát
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => window.location.href = '/messages'}
+                    >
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Zprávy ({stats.messages.conversations})
                   </Button>
                   <Button 
                     variant="outline" 
@@ -672,6 +771,7 @@ export default function ProfilePage() {
                   </Button>
                 </CardContent>
               </Card>
+              )}
             </div>
           </div>
         </div>
@@ -679,5 +779,22 @@ export default function ProfilePage() {
 
       <Footer />
     </div>
+  )
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex flex-col">
+        <main className="flex-1 py-8">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <ProfileSkeleton />
+          </div>
+        </main>
+        <Footer />
+      </div>
+    }>
+      <ProfilePageContent />
+    </Suspense>
   )
 }

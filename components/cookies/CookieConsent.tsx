@@ -51,6 +51,10 @@ export function CookieConsent() {
 		setConsent(all)
 		setConsentCookie(all)
 		setIsOpen(false)
+		// Zajistit, že banner se skutečně odstraní z DOM
+		setTimeout(() => {
+			setIsOpen(false)
+		}, 100)
 	}
 
 	const rejectNonEssential = () => {
@@ -58,12 +62,20 @@ export function CookieConsent() {
 		setConsent(onlyNecessary)
 		setConsentCookie(onlyNecessary)
 		setIsOpen(false)
+		// Zajistit, že banner se skutečně odstraní z DOM
+		setTimeout(() => {
+			setIsOpen(false)
+		}, 100)
 	}
 
 	const saveCustom = () => {
 		const value = { ...consent, necessary: true }
 		setConsentCookie(value)
 		setIsOpen(false)
+		// Zajistit, že banner se skutečně odstraní z DOM
+		setTimeout(() => {
+			setIsOpen(false)
+		}, 100)
 	}
 
 	if (!isOpen) return null
@@ -125,6 +137,7 @@ export function CookieConsent() {
 		</div>
 	)
 }
+
 
 
 

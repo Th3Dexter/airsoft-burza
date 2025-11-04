@@ -25,15 +25,11 @@ export default function SignInPage() {
   const handleSocialLogin = async (providerId: string) => {
     try {
       setIsSubmitting(true)
-      const result = await signIn(providerId, { callbackUrl: '/', redirect: false })
-      if (result?.ok) {
-        notifyLoginSuccess()
-      } else {
-        notifyLoginError()
-      }
+      // Pro OAuth (Google) musíme použít standardní redirect, ne redirect: false
+      // NextAuth potřebuje provést redirect na OAuth providera a zpět
+      await signIn(providerId, { callbackUrl: '/' })
     } catch (error) {
       notifyLoginError()
-    } finally {
       setIsSubmitting(false)
     }
   }

@@ -4,7 +4,14 @@ export function middleware(request: NextRequest) {
   const response = NextResponse.next()
   
   // Security headers
-  response.headers.set('X-Frame-Options', 'DENY')
+  // V development režimu povolujeme iframe pro testování (Testsprite)
+  if (process.env.NODE_ENV === 'development') {
+    // V development necháváme X-Frame-Options volné pro testovací nástroje
+    // V produkci zůstane SAMEORIGIN z next.config.js
+  } else {
+    response.headers.set('X-Frame-Options', 'SAMEORIGIN')
+  }
+  
   response.headers.set('X-Content-Type-Options', 'nosniff')
   response.headers.set('Referrer-Policy', 'origin-when-cross-origin')
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')

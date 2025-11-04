@@ -1,0 +1,750 @@
+[
+  {
+    "id": "TC001",
+    "title": "User Registration with Email and Password",
+    "description": "Verify that a new user can successfully register with valid email and password, and receive confirmation.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the signup page"
+      },
+      {
+        "type": "action",
+        "description": "Enter a valid email address and a strong password"
+      },
+      {
+        "type": "action",
+        "description": "Submit the registration form"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm that registration is successful and user is redirected to a welcome or profile page"
+      },
+      {
+        "type": "assertion",
+        "description": "Validate that confirmation email is sent if applicable"
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "User Login via Email and Password",
+    "description": "Verify that registered users can login using their email and password credentials.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the login page"
+      },
+      {
+        "type": "action",
+        "description": "Enter valid email and password"
+      },
+      {
+        "type": "action",
+        "description": "Click the login button"
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure login is successful and user is navigated to dashboard or homepage"
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "User Login Failure with Incorrect Credentials",
+    "description": "Verify that login attempt with invalid email or password results in proper error message.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the login page"
+      },
+      {
+        "type": "action",
+        "description": "Input invalid email or incorrect password"
+      },
+      {
+        "type": "action",
+        "description": "Click the login button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that an error message is displayed and login is prevented"
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "User Login via Google OAuth",
+    "description": "Verify login flow using Google OAuth provider succeeds and user is authenticated.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the login page"
+      },
+      {
+        "type": "action",
+        "description": "Click 'Sign in with Google' button"
+      },
+      {
+        "type": "action",
+        "description": "Complete Google OAuth consent and authentication"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm user is logged in and redirected to dashboard or homepage"
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Create Product Listing with Valid Details and Images",
+    "description": "Verify that logged-in user can create a detailed product listing with proper category, type (Offer/Demand), and image uploads.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as a valid user"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to new product listing creation page"
+      },
+      {
+        "type": "action",
+        "description": "Fill in all mandatory fields with valid data"
+      },
+      {
+        "type": "action",
+        "description": "Select category and listing type (Offer/Demand)"
+      },
+      {
+        "type": "action",
+        "description": "Upload product images complying with size and type restrictions"
+      },
+      {
+        "type": "action",
+        "description": "Submit the product listing form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that the product listing is created successfully and a success notification is shown"
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Validation Error on Incomplete Product Listing Submission",
+    "description": "Verify that submitting a new product listing with missing required fields triggers validation errors.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as a valid user"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to new product listing creation page"
+      },
+      {
+        "type": "action",
+        "description": "Leave one or more required fields blank"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to submit the form"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm error messages are displayed corresponding to missing required fields"
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Reject Product Listing with Invalid Image Uploads",
+    "description": "Verify that product image uploads exceeding size limit or unsupported file types are rejected with clear feedback.",
+    "category": "error handling",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to product listing creation page as logged-in user"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to upload images exceeding the maximum allowed size or in unsupported formats"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user receives specific error messages about image upload restrictions"
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Edit Product Listing Successfully",
+    "description": "Verify that users can edit their product listings and changes persist after update.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as a valid user with existing listings"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the user's product listings page"
+      },
+      {
+        "type": "action",
+        "description": "Select a listing and open edit form"
+      },
+      {
+        "type": "action",
+        "description": "Modify fields such as price, description, or category"
+      },
+      {
+        "type": "action",
+        "description": "Submit the changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that the listing is updated with new information and success notification is displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Deactivate and Reactivate Product Listing",
+    "description": "Verify that users can toggle activation status of their product listings and the status reflects correctly.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as user with active product listings"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to user's listings"
+      },
+      {
+        "type": "action",
+        "description": "Deactivate an active listing"
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure listing is marked as inactive and no longer appears in active searches"
+      },
+      {
+        "type": "action",
+        "description": "Reactivate the same listing"
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure listing status is active and visible in searches again"
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Delete Product Listing with Confirmation",
+    "description": "Verify that deleting a product listing requires user confirmation and the listing is removed.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as user with at least one product listing"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to user's product listings page"
+      },
+      {
+        "type": "action",
+        "description": "Initiate deletion of a listing"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify confirmation dialog appears"
+      },
+      {
+        "type": "action",
+        "description": "Confirm deletion"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that the listing is removed and success notification is shown"
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Browse Products with Category Filter and Search",
+    "description": "Verify visitors and logged-in users can filter product listings by categories and search terms.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to products page"
+      },
+      {
+        "type": "action",
+        "description": "Select a product category filter"
+      },
+      {
+        "type": "assertion",
+        "description": "Validate that only products belonging to selected category are displayed"
+      },
+      {
+        "type": "action",
+        "description": "Input a keyword into the product search box"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm products matching the search term are successfully filtered and displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "View Product Details with Images and Seller Contact",
+    "description": "Verify the product detail page shows all relevant information including images and seller contact details.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Select a product from the listing"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify product images, name, description, category, and price are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that seller contact information is visible and correctly formatted"
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Initiate and Send Message with Attachment in Direct Messaging",
+    "description": "Verify that logged-in users can create new conversations, send messages with file attachments successfully.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as a valid user"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to messaging page"
+      },
+      {
+        "type": "action",
+        "description": "Start a new conversation with another user"
+      },
+      {
+        "type": "action",
+        "description": "Type a message and attach valid file"
+      },
+      {
+        "type": "action",
+        "description": "Send the message"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify message and attachment appear correctly and recipient can view them"
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Close a Chat Conversation with Confirmation",
+    "description": "Verify user can close a conversation with confirmation dialog and the chat status updates accordingly.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open an active conversation"
+      },
+      {
+        "type": "action",
+        "description": "Click on close chat option"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm confirmation dialog is displayed"
+      },
+      {
+        "type": "action",
+        "description": "Confirm chat closure"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that conversation is marked closed and disallow further messages"
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Add New Service and Attach Images",
+    "description": "Verify that logged-in users can create new service listings with valid details and images upload.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as a user"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to add new service page"
+      },
+      {
+        "type": "action",
+        "description": "Fill in service details and upload service images"
+      },
+      {
+        "type": "action",
+        "description": "Submit the new service listing"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the service is added successfully and listed"
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "Submit and Display Service Reviews with Ratings",
+    "description": "Verify users can submit reviews and ratings for services and reviews are displayed correctly.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to a service detail page"
+      },
+      {
+        "type": "action",
+        "description": "Submit a review with rating and comment"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the review and rating are saved and appear under the service reviews section"
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "Filter and Search Services",
+    "description": "Verify that users can filter and search services accurately by name or category.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the services listing page"
+      },
+      {
+        "type": "action",
+        "description": "Apply filters or search for specific service names"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm the displayed services match filter and search criteria"
+      }
+    ]
+  },
+  {
+    "id": "TC018",
+    "title": "Edit User Profile and Verify Changes Persist",
+    "description": "Verify users can update their personal information, reputation, and verification status is displayed correctly.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login and open the user profile page"
+      },
+      {
+        "type": "action",
+        "description": "Edit fields such as name, contact info, or profile picture"
+      },
+      {
+        "type": "action",
+        "description": "Save the changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify updates persist and are reflected on profile and related components"
+      }
+    ]
+  },
+  {
+    "id": "TC019",
+    "title": "Notification Center: Mark as Read, Filter, and Delete",
+    "description": "Verify that users can view notifications, mark them as read/unread, apply filters, and delete notifications.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login and navigate to notification center"
+      },
+      {
+        "type": "action",
+        "description": "Mark selected notifications as read"
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure read notifications display updated status"
+      },
+      {
+        "type": "action",
+        "description": "Apply filters to show only unread/read notifications"
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure filtered view matches the filter selection"
+      },
+      {
+        "type": "action",
+        "description": "Delete a notification"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify notification is removed from the list"
+      }
+    ]
+  },
+  {
+    "id": "TC020",
+    "title": "Verify Product View Count Increment with Spam Protection",
+    "description": "Ensure product view count increments once per user per hour and repeated views are blocked by localStorage mechanisms.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open a product detail page as a visitor or logged-in user"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that product view count increments by 1"
+      },
+      {
+        "type": "action",
+        "description": "Reload or revisit the same product within 1 hour"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that view count does not increment again"
+      }
+    ]
+  },
+  {
+    "id": "TC021",
+    "title": "Security: Input Sanitization Prevents XSS Attacks",
+    "description": "Verify that all user inputs are sanitized on client and server sides to prevent XSS injection.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Attempt to submit inputs containing malicious scripts in product listing, profile edits, messages, and reviews"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that input sanitization strips or encodes malicious inputs, preventing script execution"
+      }
+    ]
+  },
+  {
+    "id": "TC022",
+    "title": "Authorization Checks Prevent Unauthorized Actions",
+    "description": "Verify that critical API endpoints enforce authorization properly preventing unauthorized access or modification.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Attempt to perform product/service listing edits or deletes from another user's credentials or unauthenticated state"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm request is denied with proper error code and no data is altered"
+      }
+    ]
+  },
+  {
+    "id": "TC023",
+    "title": "Secure File Uploads Validate Types and Sizes",
+    "description": "Verify all file uploads validate file type and size limits on both client and server sides.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Attempt to upload allowed and disallowed file types and oversized files during product and service creation or messaging"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify disallowed uploads are rejected with appropriate error messages and allowed uploads proceed successfully"
+      }
+    ]
+  },
+  {
+    "id": "TC024",
+    "title": "Middleware Enforces HTTPS and Secure Headers",
+    "description": "Verify the platform middleware actively redirects HTTP requests to HTTPS and adds security headers correctly.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Send HTTP request to the platform"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm automatic redirect to HTTPS"
+      },
+      {
+        "type": "action",
+        "description": "Inspect response headers for security headers (e.g., Content-Security-Policy, X-Frame-Options)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify presence and correctness of security headers"
+      }
+    ]
+  },
+  {
+    "id": "TC025",
+    "title": "Responsive Sidebar Navigation Adapts to User State and Screen Size",
+    "description": "Verify sidebar navigation adjusts correctly for logged in/out users and across mobile, tablet, and desktop breakpoints.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Test navigation as logged-out visitor on desktop viewport"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify appropriate nav links are shown for guest users and layout matches desktop design"
+      },
+      {
+        "type": "action",
+        "description": "Login and check sidebar links on desktop size"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify logged-in user links are shown and layout is correct"
+      },
+      {
+        "type": "action",
+        "description": "Resize viewport to tablet and mobile widths and verify sidebar responsiveness and toggle functionality"
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure the navigation adjusts appropriately, remains usable and does not break"
+      }
+    ]
+  },
+  {
+    "id": "TC026",
+    "title": "Error Handling Displays Custom Pages and Messages",
+    "description": "Verify the application displays custom error pages and user-friendly messages on not found routes and when errors occur.",
+    "category": "error handling",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to a non-existent route"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm that the custom 404 'not found' page is displayed"
+      },
+      {
+        "type": "action",
+        "description": "Trigger server error or client error in API or page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify custom error page or error message is displayed gracefully"
+      }
+    ]
+  },
+  {
+    "id": "TC027",
+    "title": "UI Components Display Loading and Confirmation States Correctly",
+    "description": "Verify UI components such as loading spinners, toasts, and confirmation dialogs operate correctly during asynchronous operations.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Trigger data fetches that have loading states (e.g., product list, profile update)"
+      },
+      {
+        "type": "assertion",
+        "description": "Observe UI displays loading indicators appropriately"
+      },
+      {
+        "type": "action",
+        "description": "Perform deletions or state toggling to observe confirmation dialogs"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm that confirmation dialogs appear and respond correctly to user actions"
+      }
+    ]
+  },
+  {
+    "id": "TC028",
+    "title": "Main Landing Page Displays Correct Sections",
+    "description": "Verify the homepage shows hero section, featured products, call-to-action, and platform statistics as designed.",
+    "category": "functional",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the main landing page"
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure hero section is visible with correct content"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify featured products are displayed and can be interacted with"
+      },
+      {
+        "type": "assertion",
+        "description": "Check visibility and accuracy of platform statistics"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm call-to-action buttons are present and functional"
+      }
+    ]
+  }
+]

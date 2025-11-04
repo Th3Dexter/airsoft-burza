@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { useSession, signIn, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/Button'
 import { useNotifications } from '@/lib/NotificationContext'
@@ -20,7 +21,8 @@ import {
   ChevronLeft,
   ChevronRight,
   LogIn,
-  UserPlus
+  UserPlus,
+  Wrench
 } from 'lucide-react'
 
 export function Sidebar() {
@@ -29,11 +31,13 @@ export function Sidebar() {
   const { data: session, status } = useSession()
   const { showWarning } = useNotifications()
   const { confirmLogout, notifyLogoutSuccess } = useNotificationActions()
+  const router = useRouter()
 
   const navigation = [
     { name: 'Domů', href: '/', icon: Home },
     { name: 'Poptávka', href: '/poptavka', icon: Target },
     { name: 'Nabídka', href: '/nabidka', icon: Package },
+    { name: 'Servisy', href: '/services', icon: Wrench },
     { name: 'O nás', href: '/about', icon: Info },
   ]
 
@@ -157,6 +161,27 @@ export function Sidebar() {
                       </span>
                     </Button>
                   </Link>
+
+                  {/* Admin Panel - zobrazit pouze pro adminy */}
+                  {(session.user as any)?.isAdmin && (
+                    <Link href="/admin">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className={`relative hover:bg-muted text-blue-600 dark:text-blue-400 transition-all duration-300 ease-in-out ${
+                          isOpen ? 'w-full h-10 justify-start' : 'w-full h-10'
+                        }`}
+                        title={!isOpen ? 'Administrace' : ''}
+                      >
+                        <Shield className="h-5 w-5" />
+                        <span className={`ml-3 text-sm font-medium transition-all duration-300 ease-in-out ${
+                          isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2 absolute'
+                        }`}>
+                          Administrace
+                        </span>
+                      </Button>
+                    </Link>
+                  )}
                 </>
               )}
 
@@ -166,7 +191,7 @@ export function Sidebar() {
                 size="icon"
                 onClick={() => {
                   if (session) {
-                    window.location.href = '/products/new'
+                    router.push('/products/new')
                   } else {
                     showWarning(
                       'Přihlášení vyžadováno',
@@ -192,37 +217,13 @@ export function Sidebar() {
                 <div className="h-10 w-10 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600 mx-auto" />
               ) : session ? (
                 <>
-                  {/* Logout Button - zobrazit pouze pro přihlášené uživatele */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={async () => {
-                      const confirmed = await confirmLogout()
-                      if (confirmed) {
-                        await signOut({ callbackUrl: '/' })
-                        notifyLogoutSuccess()
-                      }
-                    }}
-                    className={`relative hover:bg-muted text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-all duration-300 ease-in-out ${
-                      isOpen ? 'w-full h-10 justify-start' : 'w-full h-10'
-                    }`}
-                    title={!isOpen ? 'Odhlásit se' : ''}
-                  >
-                    <LogIn className="h-5 w-5 rotate-180" />
-                    <span className={`ml-3 text-sm font-medium transition-all duration-300 ease-in-out ${
-                      isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2 absolute'
-                    }`}>
-                      Odhlásit se
-                    </span>
-                  </Button>
-
                   {/* Profile Button */}
                   <div className="relative">
                     <Link href="/profile">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className={`hover:bg-muted text-foreground transition-all duration-300 ease-in-out ${
+                        className={`relative hover:bg-muted text-foreground transition-all duration-300 ease-in-out ${
                           isOpen ? 'w-full h-10 justify-start' : 'w-full h-10'
                         }`}
                         title={!isOpen ? 'Uživatelský profil' : ''}
@@ -273,9 +274,43 @@ export function Sidebar() {
                         >
                           Zprávy
                         </Link>
+                        {(session.user as any)?.isAdmin && (
+                          <Link 
+                            href="/admin" 
+                            className="block px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700 font-semibold"
+                            onClick={() => setIsUserMenuOpen(false)}
+                          >
+                            <Shield className="h-4 w-4 inline mr-2" />
+                            Administrace
+                          </Link>
+                        )}
                       </div>
                     )}
                   </div>
+
+                  {/* Logout Button - zobrazit pouze pro přihlášené uživatele */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={async () => {
+                      const confirmed = await confirmLogout()
+                      if (confirmed) {
+                        await signOut({ callbackUrl: '/' })
+                        notifyLogoutSuccess()
+                      }
+                    }}
+                    className={`relative hover:bg-muted text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-all duration-300 ease-in-out ${
+                      isOpen ? 'w-full h-10 justify-start' : 'w-full h-10'
+                    }`}
+                    title={!isOpen ? 'Odhlásit se' : ''}
+                  >
+                    <LogIn className="h-5 w-5 rotate-180" />
+                    <span className={`ml-3 text-sm font-medium transition-all duration-300 ease-in-out ${
+                      isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2 absolute'
+                    }`}>
+                      Odhlásit se
+                    </span>
+                  </Button>
                 </>
               ) : (
                 <div className="space-y-2">

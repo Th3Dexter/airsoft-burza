@@ -128,19 +128,36 @@ export function ProductGrid({ searchParams }: ProductGridProps) {
     )
   }
 
+  // Zjistit, zda jsou aktivní filtry nebo vyhledávání (kromě defaultní kategorie)
+  // Kategorie sama o sobě není "filtr", ale součást URL struktury
+  const hasActiveFilters = !!(
+    searchParams.search ||
+    searchParams.minPrice ||
+    searchParams.maxPrice ||
+    searchParams.condition ||
+    searchParams.location ||
+    (searchParams.sort && searchParams.sort !== 'newest')
+  )
+
   if (products.length === 0) {
     return (
       <div className="text-center py-12">
         <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-          Žádné produkty nenalezeny
+          {hasActiveFilters 
+            ? 'Žádné inzeráty neodpovídají zadaným parametrům vyhledávání' 
+            : 'Zatím žádné inzeráty'}
         </h3>
         <p className="text-gray-600 dark:text-gray-300 mb-6">
-          Zkuste změnit filtry nebo vyhledávací termín
+          {hasActiveFilters 
+            ? 'Zkuste změnit filtry nebo vyhledávací termín' 
+            : 'Buďte první, kdo přidá inzerát na platformu'}
         </p>
-        <Button asChild>
-          <Link href="/products/new">Přidat první inzerát</Link>
-        </Button>
+        {!hasActiveFilters && (
+          <Button asChild>
+            <Link href="/products/new">Přidat první inzerát</Link>
+          </Button>
+        )}
       </div>
     )
   }

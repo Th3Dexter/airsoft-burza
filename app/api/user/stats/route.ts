@@ -17,7 +17,25 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const userId = (session!.user as any).id
+    const { searchParams } = new URL(request.url)
+    const requestedUserId = searchParams.get('userId')
+    const currentUserId = (session!.user as any).id
+    const isAdmin = (session!.user as any).isAdmin || false
+    
+    // Pokud je zadán userId parametr, zkontrolovat oprávnění
+    // Pouze admin může zobrazit statistiky jiného uživatele
+    let userId = currentUserId
+    if (requestedUserId) {
+      if (isAdmin) {
+        userId = requestedUserId
+      } else {
+        // Pokud není admin, může zobrazit pouze svůj profil
+        return NextResponse.json(
+          { message: 'Nemáte oprávnění zobrazit statistiky jiného uživatele' },
+          { status: 403 }
+        )
+      }
+    }
 
     // Načtení základních informací o uživateli
     const userInfo = await queryOne(

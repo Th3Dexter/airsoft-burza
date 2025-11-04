@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS users (
   updatedAt DATETIME(3) NOT NULL,
   isVerified BOOLEAN NOT NULL DEFAULT false,
   isBanned BOOLEAN NOT NULL DEFAULT false,
+  isAdmin BOOLEAN NOT NULL DEFAULT false,
   lastLoginAt DATETIME(3)
 );
 
@@ -104,4 +105,57 @@ CREATE TABLE IF NOT EXISTS messages (
   FOREIGN KEY (conversationId) REFERENCES conversations(id) ON DELETE CASCADE,
   FOREIGN KEY (senderId) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (receiverId) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Tabulka servisů
+CREATE TABLE IF NOT EXISTS services (
+  id VARCHAR(191) PRIMARY KEY,
+  name VARCHAR(191) NOT NULL,
+  description TEXT NOT NULL,
+  location VARCHAR(191) NOT NULL,
+  contactEmail VARCHAR(191) NOT NULL,
+  contactPhone VARCHAR(191),
+  image VARCHAR(512),
+  additionalImages JSON,
+  rating DECIMAL(3,2) DEFAULT NULL,
+  reviewCount INT NOT NULL DEFAULT 0,
+  isActive BOOLEAN NOT NULL DEFAULT true,
+  createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updatedAt DATETIME(3) NOT NULL,
+  userId VARCHAR(191) NOT NULL,
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Tabulka recenzí servisů
+CREATE TABLE IF NOT EXISTS service_reviews (
+  id VARCHAR(191) PRIMARY KEY,
+  serviceId VARCHAR(191) NOT NULL,
+  userId VARCHAR(191) NOT NULL,
+  ratingSpeed INT NOT NULL CHECK (ratingSpeed >= 1 AND ratingSpeed <= 5),
+  ratingQuality INT NOT NULL CHECK (ratingQuality >= 1 AND ratingQuality <= 5),
+  ratingCommunication INT NOT NULL CHECK (ratingCommunication >= 1 AND ratingCommunication <= 5),
+  ratingPrice INT NOT NULL CHECK (ratingPrice >= 1 AND ratingPrice <= 5),
+  ratingOverall INT NOT NULL CHECK (ratingOverall >= 1 AND ratingOverall <= 5),
+  comment TEXT,
+  images JSON,
+  createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updatedAt DATETIME(3) NOT NULL,
+  FOREIGN KEY (serviceId) REFERENCES services(id) ON DELETE CASCADE,
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY service_reviews_serviceId_userId_key (serviceId, userId)
+);
+
+-- Tabulka nahlášených problémů
+CREATE TABLE IF NOT EXISTS reports (
+  id VARCHAR(191) PRIMARY KEY,
+  type ENUM('BUG', 'FEATURE', 'SECURITY', 'OTHER') NOT NULL,
+  title VARCHAR(200) NOT NULL,
+  description TEXT NOT NULL,
+  email VARCHAR(191),
+  url VARCHAR(512),
+  status ENUM('PENDING', 'IN_PROGRESS', 'RESOLVED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
+  userId VARCHAR(191),
+  createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updatedAt DATETIME(3) NOT NULL,
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE SET NULL
 );
