@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS products (
   listingType ENUM('NABIZIM', 'SHANIM') NOT NULL DEFAULT 'NABIZIM',
   category VARCHAR(191) NOT NULL,
   subcategory VARCHAR(191),
-  condition VARCHAR(191) NOT NULL,
+  `condition` VARCHAR(191) NOT NULL,
   mainImage VARCHAR(512),
   images JSON,
   location VARCHAR(191),
@@ -77,7 +77,14 @@ CREATE TABLE IF NOT EXISTS products (
   createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   updatedAt DATETIME(3) NOT NULL,
   userId VARCHAR(191) NOT NULL,
-  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_products_listingType_isSold (listingType, isSold),
+  INDEX idx_products_createdAt (createdAt),
+  INDEX idx_products_category_listingType (category, listingType),
+  INDEX idx_products_price (price),
+  INDEX idx_products_location (location),
+  INDEX idx_products_condition (`condition`),
+  INDEX idx_products_userId (userId)
 );
 
 -- Tabulka konverzací
@@ -91,7 +98,9 @@ CREATE TABLE IF NOT EXISTS conversations (
   FOREIGN KEY (productId) REFERENCES products(id) ON DELETE CASCADE,
   FOREIGN KEY (participant1Id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (participant2Id) REFERENCES users(id) ON DELETE CASCADE,
-  UNIQUE KEY conversations_productId_participant1Id_participant2Id_key (productId, participant1Id, participant2Id)
+  UNIQUE KEY conversations_productId_participant1Id_participant2Id_key (productId, participant1Id, participant2Id),
+  INDEX idx_conversations_updatedAt (updatedAt),
+  INDEX idx_conversations_participants (participant1Id, participant2Id)
 );
 
 -- Tabulka zpráv
@@ -104,7 +113,9 @@ CREATE TABLE IF NOT EXISTS messages (
   receiverId VARCHAR(191) NOT NULL,
   FOREIGN KEY (conversationId) REFERENCES conversations(id) ON DELETE CASCADE,
   FOREIGN KEY (senderId) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (receiverId) REFERENCES users(id) ON DELETE CASCADE
+  FOREIGN KEY (receiverId) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_messages_conversationId_createdAt (conversationId, createdAt),
+  INDEX idx_messages_receiverId (receiverId)
 );
 
 -- Tabulka servisů
@@ -123,7 +134,10 @@ CREATE TABLE IF NOT EXISTS services (
   createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   updatedAt DATETIME(3) NOT NULL,
   userId VARCHAR(191) NOT NULL,
-  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_services_isActive (isActive),
+  INDEX idx_services_location (location),
+  INDEX idx_services_userId (userId)
 );
 
 -- Tabulka recenzí servisů

@@ -3,8 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { query, queryOne, insert } from '@/lib/mysql'
 import { sanitizeInput } from '@/lib/utils'
-import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
+import { storeFile } from '@/lib/storage'
+import { getCache, setCache, invalidateCacheByPrefix } from '@/lib/redis'
 
 // Force dynamic rendering - requires session data for POST
 export const dynamic = 'force-dynamic'
@@ -179,18 +179,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Uložení obrázků do souborového systému
-    const uploadsDir = join(process.cwd(), 'public', 'uploads', 'products')
-    
-    // Vytvoření složky, pokud neexistuje
-    try {
-      await mkdir(uploadsDir, { recursive: true })
-    } catch (error) {
-      // Složka už existuje
-    }
-
     // Uložení každého obrázku v původním pořadí - každý jen jednou
-    const baseTimestamp = Date.now()
     let mainImagePath: string | null = null
     
     // Validace indexu hlavního obrázku - defaultně první (index 0)
@@ -251,10 +240,13 @@ export async function POST(request: NextRequest) {
         }
         
         const buffer = Buffer.from(bytes)
-        await writeFile(filePath, buffer)
+        const storedFile = await storeFile(
+          buffer,
+          file.name || `image_${i}${fileExtension}`,
+          'products'
+        )
         
-        // Přidání URL cesty (relativní k public složce) - pouze pokud se úspěšně uložilo
-        const savedPath = `/uploads/products/${fileName}`
+        const savedPath = storedFile.url
         images.push(savedPath)
         
         // Nastavit hlavní obrázek podle indexu z frontendu (nebo první pokud není vybrán)
@@ -279,15 +271,6 @@ export async function POST(request: NextRequest) {
     // Pokud nebyl hlavní obrázek nastaven (např. kvůli chybě), použij první
     if (!mainImagePath && images.length > 0) {
       mainImagePath = images[0]
-    }
-
-    // Bezpečně zajistit existenci sloupce mainImage (před images)
-    try {
-      await insert(
-        "ALTER TABLE products ADD COLUMN mainImage VARCHAR(512) NULL AFTER `condition`"
-      )
-    } catch (e) {
-      // Sloupec už pravděpodobně existuje – ignorovat
     }
 
     // Mapování kategorií
@@ -349,6 +332,9 @@ export async function POST(request: NextRequest) {
       [productId]
     )
 
+    await invalidateCacheByPrefix('products:list:')
+    await invalidateCacheByPrefix('stats:summary')
+
     return NextResponse.json(
       { 
         message: 'Produkt byl úspěšně vytvořen',
@@ -369,6 +355,15 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
+    const cacheKey = getProductsCacheKey(searchParams)
+    const cacheTtl = Number(process.env.PRODUCTS_CACHE_TTL_SECONDS || 60)
+
+    if (cacheTtl > 0) {
+      const cachedResponse = await getCache<{ products: any[]; pagination: any }>(cacheKey)
+      if (cachedResponse) {
+        return NextResponse.json(cachedResponse)
+      }
+    }
     
     // Získání parametrů pro filtrování a stránkování
     const page = parseInt(searchParams.get('page') || '1')
@@ -543,7 +538,7 @@ export async function GET(request: NextRequest) {
       }
     }) : []
 
-    return NextResponse.json({
+    const responsePayload = {
       products: transformedProducts,
       pagination: {
         page,
@@ -553,7 +548,13 @@ export async function GET(request: NextRequest) {
         hasNext: page < totalPages,
         hasPrev: page > 1
       }
-    })
+    }
+
+    if (cacheTtl > 0) {
+      await setCache(cacheKey, responsePayload, cacheTtl)
+    }
+
+    return NextResponse.json(responsePayload)
 
   } catch (error) {
     console.error('Products fetch error:', error)
@@ -562,4 +563,13 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
+}
+
+function getProductsCacheKey(searchParams: URLSearchParams) {
+  const entries = Array.from(searchParams.entries())
+    .map(([key, value]) => [key, value ?? ''] as const)
+    .sort(([a], [b]) => a.localeCompare(b))
+
+  const serialized = entries.map(([key, value]) => `${key}=${value}`).join('&')
+  return `products:list:${serialized}`
 }

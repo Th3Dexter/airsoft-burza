@@ -1,10 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query } from '@/lib/mysql'
+import { getCache, setCache } from '@/lib/redis'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
+    const cacheKey = 'stats:summary'
+    const cacheTtl = Number(process.env.STATS_CACHE_TTL_SECONDS || 120)
+
+    if (cacheTtl > 0) {
+      const cached = await getCache<any>(cacheKey)
+      if (cached) {
+        return NextResponse.json(cached)
+      }
+    }
+
     // Celkový počet aktivních inzerátů (nabízím)
     const [totalActive] = await query(
       `SELECT COUNT(*) as count FROM products WHERE listingType = 'NABIZIM' AND isSold = 0`
@@ -50,7 +61,7 @@ export async function GET(request: NextRequest) {
        WHERE listingType = 'NABIZIM' AND isSold = 0`
     ) as any[]
 
-    return NextResponse.json({
+    const payload = {
       totalActive: parseInt(totalActive.count) || 0,
       newLast24h: parseInt(newLast24h.count) || 0,
       newLast7d: parseInt(newLast7d.count) || 0,
@@ -58,7 +69,13 @@ export async function GET(request: NextRequest) {
       totalViews: parseInt(totalViews.total) || 0,
       avgViews,
       activeSellers: parseInt(activeSellers.count) || 0,
-    })
+    }
+
+    if (cacheTtl > 0) {
+      await setCache(cacheKey, payload, cacheTtl)
+    }
+
+    return NextResponse.json(payload)
   } catch (error) {
     console.error('Stats fetch error:', error)
     return NextResponse.json(

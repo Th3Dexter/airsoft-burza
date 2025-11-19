@@ -11,6 +11,44 @@ const connectionConfig = {
   queueLimit: 0,
 }
 
+async function getExistingColumns(connection, table) {
+  const [rows] = await connection.execute(
+    `
+      SELECT COLUMN_NAME
+      FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA = ?
+        AND TABLE_NAME = ?
+    `,
+    [connectionConfig.database, table]
+  )
+  return rows.map((row) => row.COLUMN_NAME)
+}
+
+async function getExistingIndexes(connection, table) {
+  const [rows] = await connection.execute(
+    `
+      SELECT INDEX_NAME
+      FROM INFORMATION_SCHEMA.STATISTICS
+      WHERE TABLE_SCHEMA = ?
+        AND TABLE_NAME = ?
+    `,
+    [connectionConfig.database, table]
+  )
+  return new Set(rows.map((row) => row.INDEX_NAME))
+}
+
+async function ensureIndex(connection, table, indexName, createSql) {
+  const existingIndexes = await getExistingIndexes(connection, table)
+  if (existingIndexes.has(indexName)) {
+    console.log(`⏭️  Index ${indexName} na tabulce ${table} již existuje`)
+    return
+  }
+
+  console.log(`➕ Vytvářím index ${indexName} na tabulce ${table}`)
+  await connection.execute(createSql)
+  console.log(`✅ Index ${indexName} byl vytvořen`)
+}
+
 async function migrateDatabase() {
   const connection = await mysql.createConnection(connectionConfig)
   
@@ -18,14 +56,7 @@ async function migrateDatabase() {
     console.log('🔄 Spouštím migraci databáze...')
     
     // Kontrola existence sloupců v users
-    const [userColumns] = await connection.execute(`
-      SELECT COLUMN_NAME 
-      FROM INFORMATION_SCHEMA.COLUMNS 
-      WHERE TABLE_SCHEMA = 'burza_web' 
-      AND TABLE_NAME = 'users'
-    `)
-    
-    const existingUserColumns = userColumns.map(col => col.COLUMN_NAME)
+    const existingUserColumns = await getExistingColumns(connection, 'users')
     console.log('📋 Existující sloupce (users):', existingUserColumns)
     
     // Přidání chybějících sloupců (users)
@@ -71,13 +102,7 @@ async function migrateDatabase() {
     }
 
     // Kontrola existence sloupců v products
-    const [productColumns] = await connection.execute(`
-      SELECT COLUMN_NAME 
-      FROM INFORMATION_SCHEMA.COLUMNS 
-      WHERE TABLE_SCHEMA = 'burza_web' 
-      AND TABLE_NAME = 'products'
-    `)
-    const existingProductColumns = productColumns.map(col => col.COLUMN_NAME)
+    const existingProductColumns = await getExistingColumns(connection, 'products')
     console.log('📦 Existující sloupce (products):', existingProductColumns)
 
     // Přidání listingType do products
@@ -117,14 +142,7 @@ async function migrateDatabase() {
     }
 
     // Kontrola existence sloupců v conversations
-    const [conversationColumns] = await connection.execute(`
-      SELECT COLUMN_NAME 
-      FROM INFORMATION_SCHEMA.COLUMNS 
-      WHERE TABLE_SCHEMA = 'burza_web' 
-      AND TABLE_NAME = 'conversations'
-    `)
-    
-    const existingConversationColumns = conversationColumns.map(col => col.COLUMN_NAME)
+    const existingConversationColumns = await getExistingColumns(connection, 'conversations')
     console.log('💬 Existující sloupce (conversations):', existingConversationColumns)
 
     // Přidání sloupců pro uzavření konverzace
@@ -168,9 +186,9 @@ async function migrateDatabase() {
     const [servicesTables] = await connection.execute(`
       SELECT TABLE_NAME 
       FROM INFORMATION_SCHEMA.TABLES 
-      WHERE TABLE_SCHEMA = 'burza_web' 
+      WHERE TABLE_SCHEMA = ?
       AND TABLE_NAME = 'services'
-    `)
+    `, [connectionConfig.database])
     
     if (servicesTables.length === 0) {
       console.log('➕ Přidávám tabulku: services')
@@ -183,13 +201,17 @@ async function migrateDatabase() {
           contactEmail VARCHAR(191) NOT NULL,
           contactPhone VARCHAR(191),
           image VARCHAR(512),
+          additionalImages JSON,
           rating DECIMAL(3,2) DEFAULT NULL,
           reviewCount INT NOT NULL DEFAULT 0,
           isActive BOOLEAN NOT NULL DEFAULT true,
           createdAt DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
           updatedAt DATETIME(3) NOT NULL,
           userId VARCHAR(191) NOT NULL,
-          FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+          FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+          INDEX idx_services_isActive (isActive),
+          INDEX idx_services_location (location),
+          INDEX idx_services_userId (userId)
         )
       `)
       console.log('✅ Tabulka services byla úspěšně vytvořena')
@@ -198,14 +220,7 @@ async function migrateDatabase() {
     }
     
     // Kontrola existence sloupců v services
-    const [serviceColumns] = await connection.execute(`
-      SELECT COLUMN_NAME 
-      FROM INFORMATION_SCHEMA.COLUMNS 
-      WHERE TABLE_SCHEMA = 'burza_web' 
-      AND TABLE_NAME = 'services'
-    `)
-    
-    const existingServiceColumns = serviceColumns.map(col => col.COLUMN_NAME)
+    const existingServiceColumns = await getExistingColumns(connection, 'services')
     console.log('🔧 Existující sloupce (services):', existingServiceColumns)
     
     // Přidání sloupce additionalImages do services
@@ -224,9 +239,9 @@ async function migrateDatabase() {
     const [reviewsTables] = await connection.execute(`
       SELECT TABLE_NAME 
       FROM INFORMATION_SCHEMA.TABLES 
-      WHERE TABLE_SCHEMA = 'burza_web' 
+      WHERE TABLE_SCHEMA = ?
       AND TABLE_NAME = 'service_reviews'
-    `)
+    `, [connectionConfig.database])
     
     if (reviewsTables.length === 0) {
       console.log('➕ Přidávám tabulku: service_reviews')
@@ -258,9 +273,9 @@ async function migrateDatabase() {
     const [reportsTables] = await connection.execute(`
       SELECT TABLE_NAME 
       FROM INFORMATION_SCHEMA.TABLES 
-      WHERE TABLE_SCHEMA = 'burza_web' 
+      WHERE TABLE_SCHEMA = ?
       AND TABLE_NAME = 'reports'
-    `)
+    `, [connectionConfig.database])
     
     if (reportsTables.length === 0) {
       console.log('➕ Přidávám tabulku: reports')
@@ -284,6 +299,98 @@ async function migrateDatabase() {
       console.log('⏭️  Tabulka reports již existuje')
     }
     
+    // Indexy pro products (odpovídají aktuálnímu schématu)
+    await ensureIndex(
+      connection,
+      'products',
+      'idx_products_listingType_isSold',
+      'CREATE INDEX idx_products_listingType_isSold ON products (listingType, isSold)'
+    )
+    await ensureIndex(
+      connection,
+      'products',
+      'idx_products_createdAt',
+      'CREATE INDEX idx_products_createdAt ON products (createdAt)'
+    )
+    await ensureIndex(
+      connection,
+      'products',
+      'idx_products_category_listingType',
+      'CREATE INDEX idx_products_category_listingType ON products (category, listingType)'
+    )
+    await ensureIndex(
+      connection,
+      'products',
+      'idx_products_price',
+      'CREATE INDEX idx_products_price ON products (price)'
+    )
+    await ensureIndex(
+      connection,
+      'products',
+      'idx_products_location',
+      'CREATE INDEX idx_products_location ON products (location)'
+    )
+    await ensureIndex(
+      connection,
+      'products',
+      'idx_products_condition',
+      'CREATE INDEX idx_products_condition ON products (`condition`)'
+    )
+    await ensureIndex(
+      connection,
+      'products',
+      'idx_products_userId',
+      'CREATE INDEX idx_products_userId ON products (userId)'
+    )
+
+    // Indexy pro conversations
+    await ensureIndex(
+      connection,
+      'conversations',
+      'idx_conversations_updatedAt',
+      'CREATE INDEX idx_conversations_updatedAt ON conversations (updatedAt)'
+    )
+    await ensureIndex(
+      connection,
+      'conversations',
+      'idx_conversations_participants',
+      'CREATE INDEX idx_conversations_participants ON conversations (participant1Id, participant2Id)'
+    )
+
+    // Indexy pro messages
+    await ensureIndex(
+      connection,
+      'messages',
+      'idx_messages_conversationId_createdAt',
+      'CREATE INDEX idx_messages_conversationId_createdAt ON messages (conversationId, createdAt)'
+    )
+    await ensureIndex(
+      connection,
+      'messages',
+      'idx_messages_receiverId',
+      'CREATE INDEX idx_messages_receiverId ON messages (receiverId)'
+    )
+
+    // Indexy pro services
+    await ensureIndex(
+      connection,
+      'services',
+      'idx_services_isActive',
+      'CREATE INDEX idx_services_isActive ON services (isActive)'
+    )
+    await ensureIndex(
+      connection,
+      'services',
+      'idx_services_location',
+      'CREATE INDEX idx_services_location ON services (location)'
+    )
+    await ensureIndex(
+      connection,
+      'services',
+      'idx_services_userId',
+      'CREATE INDEX idx_services_userId ON services (userId)'
+    )
+
     console.log('🎉 Migrace databáze dokončena!')
     
   } catch (error) {
