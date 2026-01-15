@@ -28,8 +28,8 @@ const pageVariants = {
 
 const pageTransition = {
   type: 'tween' as const,
-  ease: 'anticipate' as const,
-  duration: 0.3
+  ease: 'easeInOut' as const,
+  duration: 0.15 // Zkráceno z 0.3s na 0.15s pro rychlejší navigaci
 }
 
 export function PageTransition({ children }: PageTransitionProps) {

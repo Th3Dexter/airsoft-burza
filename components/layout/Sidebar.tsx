@@ -96,6 +96,7 @@ export function Sidebar() {
                   <Link
                     key={item.name}
                     href={(item as any).href}
+                    prefetch={true}
                     className={`group relative flex items-center p-3 text-foreground hover:text-muted-foreground hover:bg-military-charcoal rounded-lg transition-colors ${
                       isOpen ? 'justify-start' : 'justify-center'
                     }`}

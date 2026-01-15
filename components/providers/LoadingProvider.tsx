@@ -18,21 +18,21 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
   const [loadingText, setLoadingText] = useState('Načítání...')
   const pathname = usePathname()
 
-  // Automatické načítání při změně stránky
+  // Automatické načítání při změně stránky - bez zbytečného zpoždění
   useEffect(() => {
-    const handleRouteChange = () => {
-      setIsLoading(true)
-      setLoadingText('Načítání stránky...')
-      
-      // Simulace načítání
-      const timer = setTimeout(() => {
-        setIsLoading(false)
-      }, 300)
+    // Zobrazit loader pouze na velmi krátkou dobu
+    setIsLoading(true)
+    setLoadingText('Načítání stránky...')
+    
+    // Okamžité skrytí - Next.js router je rychlý
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+    }, 50) // Minimální zpoždění pouze pro vizuální feedback
 
-      return () => clearTimeout(timer)
+    return () => {
+      clearTimeout(timer)
+      setIsLoading(false)
     }
-
-    handleRouteChange()
   }, [pathname])
 
   const setLoading = (loading: boolean) => {
