@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://airsoft-burza.cz/sitemap.xml
+

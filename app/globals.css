@@ -1,0 +1,263 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Good Timing Font */
+@font-face {
+  font-family: 'Good Timing';
+  src: url('/fonts/GoodTimingRg-Bold.otf') format('opentype'),
+       url('/fonts/GoodTimingRg-Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    /* Nová vojenská paleta */
+    --background: #0F1113; /* Pozadí těla (hodně tmavé) */
+    --foreground: #E5E7EB; /* Text na tmavém */
+    --card: #1A1D20; /* Panely / karty */
+    --card-foreground: #E5E7EB; /* Text */
+    --popover: #1A1D20; /* Panely */
+    --popover-foreground: #E5E7EB; /* Text */
+    --primary: #2F3B2F; /* Akcent 1 (olive/OD green) */
+    --primary-foreground: #E5E7EB; /* Text */
+    --secondary: #1A1D20; /* Tmavě šedá */
+    --secondary-foreground: #E5E7EB; /* Text */
+    --muted: #1A1D20; /* Tmavě šedá */
+    --muted-foreground: #9CA3AF; /* Světlejší šedá pro metadata */
+    --accent: #CFAF6B; /* Akcent 2 (písek / desert) */
+    --accent-foreground: #0F1113; /* Tmavý text */
+    --destructive: #C53D3D; /* Červená pro destrukci */
+    --destructive-foreground: #FFFFFF; /* White */
+    --border: #2F3B2F; /* Hranice */
+    --input: #1A1D20; /* Input pole */
+    --ring: #CFAF6B; /* Focus ring */
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Nová vojenská paleta - tmavý režim (hlavní) */
+    --background: #0F1113; /* Pozadí těla (hodně tmavé) */
+    --foreground: #E5E7EB; /* Text na tmavém */
+    --card: #1A1D20; /* Panely / karty */
+    --card-foreground: #E5E7EB; /* Text */
+    --popover: #1A1D20; /* Panely */
+    --popover-foreground: #E5E7EB; /* Text */
+    --primary: #2F3B2F; /* Akcent 1 (olive/OD green) */
+    --primary-foreground: #E5E7EB; /* Text */
+    --secondary: #1A1D20; /* Tmavě šedá */
+    --secondary-foreground: #E5E7EB; /* Text */
+    --muted: #1A1D20; /* Tmavě šedá */
+    --muted-foreground: #9CA3AF; /* Světlejší šedá pro metadata */
+    --accent: #CFAF6B; /* Akcent 2 (písek / desert) */
+    --accent-foreground: #0F1113; /* Tmavý text */
+    --destructive: #C53D3D; /* Červená pro destrukci */
+    --destructive-foreground: #FFFFFF; /* White */
+    --border: #2F3B2F; /* Hranice */
+    --input: #1A1D20; /* Input pole */
+    --ring: #CFAF6B; /* Focus ring */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply text-foreground antialiased;
+  }
+  
+  /* Use Good Timing for all headings */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Good Timing', 'Orbitron', sans-serif !important;
+    font-weight: bold !important;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-200 dark:bg-gray-800;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-500 dark:bg-gray-400 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-600 dark:bg-gray-300;
+  }
+}
+
+@layer components {
+  /* Global utility to replace slate/gray colors */
+  .text-slate-50 { @apply text-foreground; }
+  .text-slate-100 { @apply text-foreground; }
+  .text-slate-200 { @apply text-foreground; }
+  .text-slate-300 { @apply text-muted-foreground; }
+  .text-slate-400 { @apply text-muted-foreground; }
+  .text-slate-500 { @apply text-accent; }
+  .text-slate-600 { @apply text-muted-foreground; }
+  .text-slate-700 { @apply text-muted-foreground; }
+  .text-slate-800 { @apply text-foreground; }
+  .text-slate-900 { @apply text-foreground; }
+  
+  .bg-slate-50 { @apply bg-background; }
+  .bg-slate-100 { @apply bg-muted; }
+  .bg-slate-200 { @apply bg-muted; }
+  .bg-slate-300 { @apply bg-muted; }
+  .bg-slate-700 { @apply bg-card; }
+  .bg-slate-800 { @apply bg-card; }
+  .bg-slate-900 { @apply bg-background; }
+  
+  .text-gray-50 { @apply text-foreground; }
+  .text-gray-100 { @apply text-foreground; }
+  .text-gray-200 { @apply text-foreground; }
+  .text-gray-300 { @apply text-muted-foreground; }
+  .text-gray-400 { @apply text-muted-foreground; }
+  .text-gray-500 { @apply text-muted-foreground; }
+  .text-gray-600 { @apply text-muted-foreground; }
+  .text-gray-700 { @apply text-foreground; }
+  .text-gray-800 { @apply text-foreground; }
+  .text-gray-900 { @apply text-foreground; }
+  
+  .bg-gray-100 { @apply bg-muted; }
+  .bg-gray-200 { @apply bg-muted; }
+  .bg-gray-300 { @apply bg-muted; }
+  .bg-gray-700 { @apply bg-card; }
+  .bg-gray-800 { @apply bg-card; }
+  .bg-gray-900 { @apply bg-background; }
+  
+  .border-slate-200 { @apply border-border; }
+  .border-slate-300 { @apply border-border; }
+  .border-slate-500 { @apply border-accent; }
+  .border-slate-700 { @apply border-border; }
+  
+  .border-gray-200 { @apply border-border; }
+  .border-gray-300 { @apply border-border; }
+  .border-gray-600 { @apply border-border; }
+  .border-gray-700 { @apply border-border; }
+  
+  .focus\\:ring-slate-500:focus { @apply focus:ring-accent; }
+  .focus\\:border-slate-500:focus { @apply focus:border-accent; }
+  
+  .dark .text-slate-100 { @apply text-foreground; }
+  .dark .text-slate-200 { @apply text-foreground; }
+  .dark .text-slate-300 { @apply text-muted-foreground; }
+  .dark .text-slate-400 { @apply text-muted-foreground; }
+  .dark .text-slate-600 { @apply text-muted-foreground; }
+  .dark .text-slate-700 { @apply text-foreground; }
+  .dark .text-slate-800 { @apply text-foreground; }
+  .dark .text-slate-900 { @apply text-foreground; }
+  .dark .text-white { @apply text-foreground; }
+  
+  .dark .bg-slate-100 { @apply bg-muted; }
+  .dark .bg-slate-200 { @apply bg-muted; }
+  .dark .bg-slate-300 { @apply bg-muted; }
+  .dark .bg-slate-400 { @apply bg-muted; }
+  .dark .bg-slate-700 { @apply bg-card; }
+  .dark .bg-slate-800 { @apply bg-card; }
+  .dark .bg-slate-900 { @apply bg-background; }
+  .dark .bg-gray-50 { @apply bg-background; }
+  .dark .bg-gray-100 { @apply bg-muted; }
+  .dark .bg-gray-200 { @apply bg-muted; }
+  .dark .bg-gray-700 { @apply bg-card; }
+  .dark .bg-gray-800 { @apply bg-card; }
+  .dark .bg-gray-900 { @apply bg-background; }
+  
+  .dark .border-gray-200 { @apply border-border; }
+  .dark .border-gray-600 { @apply border-border; }
+  .dark .border-gray-700 { @apply border-border; }
+
+  /* Clean glass effect */
+  .glass {
+    @apply bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50;
+  }
+
+  /* Clean card hover effect */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-lg hover:shadow-gray-200/50 dark:hover:shadow-gray-900/50;
+  }
+
+  /* Clean button styles */
+  .btn-clean {
+    @apply relative overflow-hidden rounded-lg font-medium transition-all duration-200 hover:shadow-md;
+  }
+
+  /* Custom focus styles */
+  .focus-clean {
+    @apply focus:outline-none focus:ring-2 focus:ring-gray-500/50 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900;
+  }
+
+  /* Text selection */
+  ::selection {
+    @apply bg-gray-200 dark:bg-gray-700 text-black dark:text-white;
+  }
+
+  /* Clean input styles */
+  .input-clean {
+    @apply w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 dark:bg-gray-800 dark:text-white transition-all duration-200;
+  }
+
+  /* Loading spinner */
+  .spinner {
+    @apply animate-spin rounded-full border-2 border-gray-300 border-t-gray-600;
+  }
+
+  /* Clean shadows */
+  .shadow-clean {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  }
+
+  .shadow-clean-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+
+  /* Clean borders */
+  .border-clean {
+    @apply border border-gray-200 dark:border-gray-700;
+  }
+
+  /* Subtle animations */
+  .fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+.camo-pattern {
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(34, 197, 94, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 50%);
+}
+
+.weapon-card {
+  @apply bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700;
+}
+
+.weapon-card:hover {
+  @apply transform -translate-y-1;
+}
